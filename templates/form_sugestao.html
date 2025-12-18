@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Sugerir Atividade{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark fw-bold">
+                <i class="bi bi-lightbulb-fill"></i> Colabore com a Escola
+            </div>
+            <div class="card-body p-4">
+                <h5 class="card-title text-primary mb-3">
+                    Você está sugerindo para: <br>
+                    <strong>{{ competencia.habilidade }}</strong>
+                </h5>
+                <p class="text-muted small">Sua sugestão será analisada pela coordenação e, se aprovada, aparecerá para outros professores quando um aluno tiver o nível indicado.</p>
+                
+                <hr>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Título da Atividade</label>
+                        <input type="text" name="titulo" class="form-control" required placeholder="Ex: Jogo da Memória das Sílabas">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Descrição da Prática (Como fazer?)</label>
+                        <textarea name="descricao" class="form-control" rows="5" required placeholder="Descreva o passo a passo, materiais necessários, etc..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Recomendada para alunos com Nível:</label>
+                        <select name="nivel_sugerido" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            <option value="1">1 - Não desenvolvido (Para quem tem muita dificuldade)</option>
+                            <option value="2">2 - Em desenvolvimento inicial</option>
+                            <option value="3">3 - Em desenvolvimento parcial</option>
+                            <option value="4">4 - Desenvolvido</option>
+                            <option value="5">5 - Plenamente desenvolvido (Para desafiar)</option>
+                        </select>
+                        <div class="form-text">O sistema irá recomendar essa atividade automaticamente quando um aluno tirar essa nota.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'avaliar_materia' relatorio.id competencia.componente %}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-warning fw-bold px-4">
+                            <i class="bi bi-send"></i> Enviar Sugestão
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,22 +1,16 @@
-"""
-URL configuration for core project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include 
+from academic.views import dashboard, turma_detail, avaliar_aluno, avaliar_materia,sugerir_atividade, area_coordenacao, gerenciar_sugestao, visualizar_relatorio
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('', dashboard, name='dashboard'),
+    path('turma/<int:turma_id>/', turma_detail, name='turma_detail'),
+    path('avaliar/<int:aluno_id>/', avaliar_aluno, name='avaliar_aluno'),
+    path('relatorio/<int:relatorio_id>/disciplina/<str:materia_codigo>/', avaliar_materia, name='avaliar_materia'),
+    path('relatorio/<int:relatorio_id>/sugerir/<int:competencia_id>/', sugerir_atividade, name='sugerir_atividade'),
+    path('coordenacao/', area_coordenacao, name='area_coordenacao'),
+    path('coordenacao/sugestao/<int:sugestao_id>/<str:acao>/', gerenciar_sugestao, name='gerenciar_sugestao'),
+    path('relatorio/<int:relatorio_id>/visualizar/', visualizar_relatorio, name='visualizar_relatorio'),
 ]

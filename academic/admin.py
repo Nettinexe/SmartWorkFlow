@@ -1,39 +1,52 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Turma, Aluno, CompetenciaBNCC, Relatorio, SugestaoAtividade
+from .models import CustomUser, Turma, Aluno, Competencia, SugestaoAtividade, Relatorio, Avaliacao
 
-# --- CONFIGURAÇÃO ESPECIAL DO USUÁRIO ---
-# Criamos uma classe que "herda" o admin padrão e adiciona nosso campo extra
+# ==============================================================================
+# 1. CONFIGURAÇÃO ESPECIAL DE USUÁRIO (CRIPTOGRAFIA)
+# ==============================================================================
+@admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    # fieldsets controla a tela de EDIÇÃO de usuário (quando você clica num usuário existente)
+    # Isso garante que a senha seja tratada com criptografia correta
+    model = CustomUser
+    
+    # Exibe a coluna 'role' (Função) na lista de usuários
+    list_display = ['username', 'first_name', 'email', 'role', 'is_staff']
+    
+    # Permite editar o campo 'role' na tela de edição do usuário
     fieldsets = UserAdmin.fieldsets + (
         ('Informações Profissionais', {'fields': ('role',)}),
     )
-    
-    # add_fieldsets controla a tela de CRIAÇÃO de usuário (quando você clica em Add User)
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Informações Profissionais', {'fields': ('role',)}),
     )
+
+# ==============================================================================
+# 2. CONFIGURAÇÃO ESPECIAL DA TURMA (FILTRO DE PROFESSORES)
+# ==============================================================================
+@admin.register(Turma)
+class TurmaAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'serie_curricular', 'ano_letivo')
     
-    # Mostra a coluna 'role' na lista geral de usuários
-    list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'is_staff')
-    list_filter = ('role', 'is_staff', 'is_superuser')
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "professores":
+            kwargs["queryset"] = CustomUser.objects.filter(role='PROFESSOR')
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
-# Registramos o CustomUser usando nossa configuração nova (CustomUserAdmin)
-admin.site.register(CustomUser, CustomUserAdmin)
+# ==============================================================================
+# 3. CONFIGURAÇÃO DA COMPETÊNCIA
+# ==============================================================================
+@admin.register(Competencia)
+class CompetenciaAdmin(admin.ModelAdmin):
+    list_display = ('codigo', 'componente', 'anos_aplicacao', 'habilidade') 
+    search_fields = ('codigo', 'habilidade', 'obj_conhecimento') 
+    list_filter = ('componente',) 
 
-# --- OUTROS REGISTROS ---
-admin.site.register(Turma)
+# ==============================================================================
+# 4. REGISTROS SIMPLES
+# ==============================================================================
+# Note: Removi o CustomUser daqui porque ele já foi registrado lá em cima
 admin.site.register(Aluno)
-admin.site.register(CompetenciaBNCC)
 admin.site.register(Relatorio)
-
-@admin.register(SugestaoAtividade)
-class SugestaoAtividadeAdmin(admin.ModelAdmin):
-    list_display = ('titulo', 'competencia', 'professor', 'status', 'data_envio')
-    list_filter = ('status', 'competencia')
-    actions = ['aprovar_sugestoes']
-
-    def aprovar_sugestoes(self, request, queryset):
-        queryset.update(status='APROVADO')
-    aprovar_sugestoes.short_description = "Aprovar sugestões selecionadas"
+admin.site.register(Avaliacao)
+admin.site.register(SugestaoAtividade)

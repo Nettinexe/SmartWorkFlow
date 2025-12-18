@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Início{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-primary fw-bold">Olá, {{ user.first_name }}!</h2>
+        <p class="text-muted mb-0" style="font-size: 20px;">{{ perfil_nome }} | Smart Workflow</p>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-light text-dark border p-2">
+            <i class="bi bi-calendar-event"></i> Ano Letivo 2026
+        </span>
+    </div>
+</div>
+
+{% if not is_professor %}
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm border-start border-4 border-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase small fw-bold">Total de Alunos</h6>
+                        <h2 class="mb-0 fw-bold text-dark">{{ total_alunos }}</h2>
+                    </div>
+                    <i class="bi bi-people display-6 text-primary opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-start border-4 border-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase small fw-bold">Turmas Ativas</h6>
+                        <h2 class="mb-0 fw-bold text-dark">{{ total_turmas }}</h2>
+                    </div>
+                    <i class="bi bi-door-open display-6 text-info opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-start border-4 border-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase small fw-bold">Aprovações Pendentes</h6>
+                        <h2 class="mb-0 fw-bold text-dark">{{ sugestoes_pendentes }}</h2>
+                    </div>
+                    <i class="bi bi-exclamation-circle display-6 text-warning opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-start border-4 border-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase small fw-bold">Relatórios em Andamento</h6>
+                        <h2 class="mb-0 fw-bold text-dark">{{ relatorios_pendentes }}</h2>
+                    </div>
+                    <i class="bi bi-graph-up display-6 text-success opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h5 class="fw-bold mb-3"><i class="bi bi-lightning-charge-fill text-warning"></i> Ações Rápidas</h5>
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <a href="{% url 'area_coordenacao' %}" class="btn btn-outline-primary w-100 p-4 shadow-sm text-start hover-card">
+            <i class="bi bi-briefcase-fill fs-3 d-block mb-2"></i>
+            <span class="fw-bold h5">Painel Pedagógico</span>
+            <p class="mb-0 small text-muted">Aprovar sugestões e revisar atividades.</p>
+        </a>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <a href="/admin/" class="btn btn-outline-dark w-100 p-4 shadow-sm text-start hover-card">
+            <i class="bi bi-gear-fill fs-3 d-block mb-2"></i>
+            <span class="fw-bold h5">Administração Técnica</span>
+            <p class="mb-0 small text-muted">Cadastrar alunos, turmas e professores.</p>
+        </a>
+    </div>
+
+{% else %}
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-start border-4 border-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase small fw-bold">Meus Alunos</h6>
+                        <h2 class="mb-0 fw-bold text-dark">{{ total_alunos }}</h2>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle">
+                        <i class="bi bi-people-fill text-primary fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-start border-4 border-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase small fw-bold">Avaliações Iniciadas</h6>
+                        <h2 class="mb-0 fw-bold text-dark">{{ iniciados }}</h2>
+                    </div>
+                    <div class="bg-info bg-opacity-10 p-3 rounded-circle">
+                        <i class="bi bi-pencil-fill text-info fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-start border-4 border-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted text-uppercase small fw-bold">Não Iniciados</h6>
+                        <h2 class="mb-0 fw-bold text-danger">{{ pendentes }}</h2>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 p-3 rounded-circle">
+                        <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted" style="font-size: 0.75rem;">
+                        Alunos que você ainda não avaliou.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h5 class="fw-bold mb-3"><i class="bi bi-easel2-fill"></i> Minhas Turmas</h5>
+<div class="row">
+    {% for turma in turmas %}
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100 border-start border-4 border-primary hover-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <h5 class="card-title fw-bold text-dark">{{ turma.nome }}</h5>
+                    <span class="badge bg-light text-dark border">{{ turma.ano_letivo }}</span>
+                </div>
+                
+                <p class="card-text text-muted small mt-2">
+                    <i class="bi bi-book-half"></i> Currículo: <strong>{{ turma.get_serie_curricular_display }}</strong>
+                </p>
+                
+                <hr>
+                
+                <a href="{% url 'turma_detail' turma.id %}" class="btn btn-primary w-100">
+                    <i class="bi bi-people-fill"></i> Ver Alunos
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info text-center py-5">
+            <i class="bi bi-info-circle display-4 d-block mb-3"></i>
+            <h4>Nenhuma turma vinculada</h4>
+            <p>Você ainda não foi adicionado a nenhuma turma. Solicite à coordenação.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endif %}
+
+<style>
+    .hover-card:hover {
+        transform: translateY(-5px);
+        transition: 0.3s;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+</style>
+{% endblock %}
