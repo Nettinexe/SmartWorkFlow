@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestão Escolar - Smart Workflow{% endblock %}
+
+{% block content %}
+<div class="container pb-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{% url 'dashboard' %}" class="text-decoration-none text-muted small mb-1 d-block">
+                <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
+            </a>
+            <h2 class="text-primary fw-bold mb-0"><i class="bi bi-building-fill-gear"></i> Gestão Escolar</h2>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs nav-fill mb-4 bg-white rounded-top shadow-sm" id="gestaoTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold py-3" id="turmas-tab" data-bs-toggle="tab" data-bs-target="#turmas" type="button">
+                <i class="bi bi-people-fill me-2"></i> TURMAS
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold py-3" id="alunos-tab" data-bs-toggle="tab" data-bs-target="#alunos" type="button">
+                <i class="bi bi-person-badge-fill me-2"></i> ALUNOS
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold py-3" id="profs-tab" data-bs-toggle="tab" data-bs-target="#profs" type="button">
+                <i class="bi bi-briefcase-fill me-2"></i> PROFESSORES
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="gestaoTabContent">
+
+        <div class="tab-pane fade show active" id="turmas" role="tabpanel">
+            <div class="d-flex justify-content-end mb-3">
+                <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTurma">
+                    <i class="bi bi-plus-lg"></i> Nova Turma
+                </button>
+            </div>
+
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Nome da Turma</th>
+                                <th>Série Curricular</th>
+                                <th class="text-end pe-4">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for turma in turmas %}
+                            <tr>
+                                <td class="ps-4 fw-bold text-dark">{{ turma.nome }}</td>
+                                <td><span class="badge bg-info-subtle text-info border border-info-subtle">{{ turma.serie_curricular }}º Ano</span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-outline-primary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#modalTurma{{ turma.id }}">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <a href="{% url 'excluir_turma' turma.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Deseja excluir esta turma?');">
+                                        <i class="bi bi-trash3"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-5 text-muted">Nenhuma turma cadastrada.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="alunos" role="tabpanel">
+            <div class="d-flex justify-content-end mb-3">
+                <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAluno">
+                    <i class="bi bi-person-plus-fill"></i> Matricular Aluno
+                </button>
+            </div>
+
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Nome Completo</th>
+                                <th>Turma Atual</th>
+                                <th class="text-end pe-4">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for aluno in alunos %}
+                            <tr>
+                                <td class="ps-4 fw-bold text-dark">{{ aluno.nome_completo }}</td>
+                                <td><span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ aluno.turma.nome }}</span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-outline-primary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#modalAluno{{ aluno.id }}">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <a href="{% url 'excluir_aluno' aluno.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('ATENÇÃO: Isso apagará o histórico deste aluno. Continuar?');">
+                                        <i class="bi bi-trash3"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-5 text-muted">Nenhum aluno matriculado.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="profs" role="tabpanel">
+            <div class="d-flex justify-content-end mb-3">
+                <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalProfessor">
+                    <i class="bi bi-briefcase-fill me-1"></i> Cadastrar Professor
+                </button>
+            </div>
+
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Nome Docente</th>
+                                <th>Usuário (Login)</th>
+                                <th>Email institucional</th>
+                                <th class="text-end pe-4">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prof in professores %}
+                            <tr>
+                                <td class="ps-4 fw-bold text-dark">{{ prof.get_full_name|default:prof.first_name }}</td>
+                                <td><code class="text-primary">{{ prof.username }}</code></td>
+                                <td>{{ prof.email|default:"<span class='text-muted'>Não informado</span>" }}</td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-outline-primary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#modalProf{{ prof.id }}">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <a href="{% url 'excluir_professor' prof.id %}" class="btn btn-outline-danger btn-sm" 
+                                       onclick="return confirm('Deseja remover o acesso deste professor?');">
+                                        <i class="bi bi-person-x-fill"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-5 text-muted">Nenhum professor cadastrado.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalTurma" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form action="{% url 'criar_turma' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-success text-white border-0">
+                    <h5 class="modal-title fw-bold">Nova Turma</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">{{ form_turma.as_p }}</div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="submit" class="btn btn-success fw-bold px-4">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAluno" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form action="{% url 'criar_aluno' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-success text-white border-0">
+                    <h5 class="modal-title fw-bold">Matricular Aluno</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">{{ form_aluno.as_p }}</div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="submit" class="btn btn-success fw-bold px-4">Finalizar Matrícula</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalProfessor" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <form action="{% url 'criar_professor' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-success text-white border-0">
+                    <h5 class="modal-title fw-bold">Novo Professor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info border-0 small mb-4">
+                        <i class="bi bi-info-circle-fill me-2"></i> Use a <strong>matrícula</strong> como login. A senha padrão será <code>123456</code>.
+                    </div>
+                    {{ form_professor.as_p }}
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="submit" class="btn btn-success fw-bold px-4">Criar Acesso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for turma in turmas %}
+<div class="modal fade" id="modalTurma{{ turma.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form action="{% url 'editar_turma' turma.id %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title fw-bold">Ajustar Turma</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nome da Turma</label>
+                        <input type="text" name="nome" class="form-control" value="{{ turma.nome }}" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold">Série Curricular</label>
+                        <select name="serie_curricular" class="form-select">
+                            {% for i in "123456789" %}
+                                <option value="{{ i }}" {% if turma.serie_curricular == i %}selected{% endif %}>{{ i }}º Ano</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% for aluno in alunos %}
+<div class="modal fade" id="modalAluno{{ aluno.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form action="{% url 'editar_aluno' aluno.id %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title fw-bold">Atualizar Aluno</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nome Completo</label>
+                        <input type="text" name="nome_completo" class="form-control" value="{{ aluno.nome_completo }}" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold">Transferir de Turma</label>
+                        <select name="turma" class="form-select">
+                            {% for t in turmas %}
+                                <option value="{{ t.id }}" {% if aluno.turma.id == t.id %}selected{% endif %}>{{ t.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Confirmar Mudança</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% for prof in professores %}
+<div class="modal fade" id="modalProf{{ prof.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg shadow">
+        <div class="modal-content border-0">
+            <form action="{% url 'editar_professor' prof.id %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title fw-bold">Vínculos do Professor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Nome</label>
+                            <input type="text" name="first_name" class="form-control" value="{{ prof.first_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Login</label>
+                            <input type="text" name="username" class="form-control" value="{{ prof.username }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="fw-bold d-block mb-3 text-primary small text-uppercase">Turmas Atribuídas</label>
+                        <div class="bg-light p-3 rounded-3 border d-flex flex-wrap gap-3">
+                            {% for turma in turmas %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="turmas" value="{{ turma.id }}" 
+                                       id="t{{ prof.id }}_{{ turma.id }}" {% if turma in prof.turmas.all %}checked{% endif %}>
+                                <label class="form-check-label fw-medium" for="t{{ prof.id }}_{{ turma.id }}">{{ turma.nome }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Salvar Vínculos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

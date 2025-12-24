@@ -1,66 +1,241 @@
 {% extends 'base.html' %}
-{% load custom_filters %} {% block title %}Relatório: {{ relatorio.aluno.nome_completo }}{% endblock %}
+{% load custom_filters %} 
+
+{% block title %}Relatório Individual: {{ relatorio.aluno.nome_completo }}{% endblock %}
 
 {% block content %}
-<div class="container bg-white shadow p-5 my-4" style="max-width: 900px; min-height: 100vh;">
-    
-    <div class="text-center border-bottom pb-4 mb-4">
-        <h1 class="fw-bold text-uppercase">Escola Municipal Ataualpa Duque</h1>
-        <p class="text-muted mb-0">Relatório de Desenvolvimento Individual do Aluno</p>
-    </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <div class="row mb-5 bg-light p-3 rounded">
-        <div class="col-md-6">
-            <strong>Aluno(a):</strong> {{ relatorio.aluno.nome_completo }}<br>
-            <strong>Turma:</strong> {{ relatorio.aluno.turma.nome }}
-        </div>
-        <div class="col-md-6 text-end">
-            <strong>Trimestre:</strong> {{ relatorio.trimestre }}º<br>
-            <strong>Ano:</strong> {{ relatorio.ano }}
-        </div>
-    </div>
+<div class="container pb-5">
 
-    <h4 class="text-primary fw-bold border-bottom pb-2 mb-4">Desempenho por Competência</h4>
+    {% if not is_professor and relatorio.status == 'ANALISE' %}
+    <div class="card border-0 shadow mb-4 bg-warning bg-opacity-10 border-start border-4 border-warning no-print">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <h4 class="fw-bold text-dark mb-1">
+                        <i class="bi bi-shield-check-fill me-2"></i>Área de Validação Pedagógica
+                    </h4>
+                    <p class="mb-0 text-muted small">
+                        Revise os níveis e observações. Ao aprovar, o documento torna-se oficial e bloqueado para o professor.
+                    </p>
+                </div>
+                <div class="col-md-5 text-end">
+                    <button type="button" class="btn btn-outline-danger fw-bold me-2" data-bs-toggle="modal" data-bs-target="#modalCorrecao">
+                        <i class="bi bi-arrow-counterclockwise"></i> Devolver para Ajustes
+                    </button>
 
-    {% for avaliacao in avaliacoes %}
-    <div class="mb-5">
-        <h5 class="fw-bold text-dark">
-            <span class="badge bg-secondary me-2">{{ avaliacao.competencia.componente }}</span>
-            {{ avaliacao.competencia.habilidade }}
-        </h5>
-        
-        <div class="ps-3 border-start border-4 border-primary ms-1 mt-2">
-            <p class="mb-1">
-                <strong>Nível Alcançado:</strong> 
-                <span class="badge bg-primary">{{ avaliacao.get_nivel_display }}</span>
-            </p>
-            <p class="text-muted fst-italic">"{{ avaliacao.observacao_especifica }}"</p>
-        </div>
-
-        {% with sugestoes=sugestoes_map|get_item:avaliacao.id %}
-            {% if sugestoes %}
-            <div class="mt-3 p-3 bg-warning bg-opacity-10 rounded border border-warning">
-                <h6 class="fw-bold text-warning text-uppercase small">
-                    <i class="bi bi-stars"></i> Sugestões de Atividade para Casa:
-                </h6>
-                <ul class="mb-0 ps-3">
-                    {% for sug in sugestoes %}
-                    <li class="mb-2">
-                        <strong>{{ sug.titulo }}:</strong> {{ sug.descricao }}
-                    </li>
-                    {% endfor %}
-                </ul>
+                    <form action="{% url 'decisao_relatorio' relatorio.id %}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="aprovar">
+                        <button type="submit" class="btn btn-success fw-bold shadow-sm" onclick="return confirm('Confirmar aprovação final deste relatório?')">
+                            <i class="bi bi-check-circle-fill me-1"></i> APROVAR DOCUMENTO
+                        </button>
+                    </form>
+                </div>
             </div>
-            {% endif %}
-        {% endwith %}
+        </div>
     </div>
-    <hr class="text-muted opacity-25">
-    {% empty %}
-    <p class="text-center text-muted">Nenhuma avaliação registrada ainda.</p>
-    {% endfor %}
+    {% endif %}
 
-    <div class="text-center mt-5 pt-5 text-muted small">
-        <p>___________________________________<br>Assinatura da Coordenação</p>
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            {% if not is_professor %}
+                <a href="{% url 'dashboard' %}" class="btn btn-light border text-muted fw-bold small">
+                    <i class="bi bi-arrow-left"></i> VOLTAR AO PAINEL
+                </a>
+            {% else %}
+                <a href="{% url 'turma_detail' relatorio.aluno.turma.id %}" class="btn btn-light border text-muted fw-bold small">
+                    <i class="bi bi-arrow-left"></i> VOLTAR PARA A TURMA
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="d-flex gap-2">
+            <button onclick="baixarPDF()" class="btn btn-danger shadow-sm fw-bold">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> GERAR PDF
+            </button>
+            <button onclick="window.print()" class="btn btn-dark shadow-sm fw-bold">
+                <i class="bi bi-printer-fill me-1"></i> IMPRIMIR
+            </button>
+        </div>
+    </div>
+
+    <div id="conteudo-relatorio" class="bg-white p-5 mx-auto shadow-lg" style="max-width: 900px; min-height: 297mm;">
+        
+        <div class="no-print">
+            {% if relatorio.status == 'RASCUNHO' %}
+                <div class="alert alert-secondary text-center mb-4 border-2" style="border-style: dashed !important;">
+                    <i class="bi bi-pencil-square me-2"></i> <strong>MODO RASCUNHO:</strong> Este documento ainda não foi enviado para análise.
+                </div>
+            {% elif relatorio.status == 'ANALISE' %}
+                <div class="alert alert-info text-center mb-4 border-2" style="border-style: dashed !important;">
+                    <i class="bi bi-hourglass-split me-2"></i> <strong>AGUARDANDO ANÁLISE:</strong> Documento em revisão pela coordenação.
+                </div>
+            {% elif relatorio.status == 'CORRECAO' %}
+                <div class="alert alert-danger mb-4 border-2 shadow-sm">
+                    <h6 class="fw-bold"><i class="bi bi-exclamation-octagon-fill me-2"></i>SOLICITAÇÃO DE CORREÇÃO:</h6>
+                    <p class="mb-0 small">"{{ relatorio.feedback_coordenacao }}"</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="text-center border-bottom border-2 border-dark pb-4 mb-4">
+            <h1 class="h3 fw-bold text-uppercase mb-1">Escola Municipal Ataualpa Duque</h1>
+            <p class="mb-0 fw-bold">Secretaria Municipal de Educação de Leopoldina</p>
+            <p class="text-muted small">Relatório de Desenvolvimento Individual do Aluno</p>
+        </div>
+
+        <div class="row mb-5 bg-light p-4 rounded border mx-0">
+            <div class="col-7">
+                <small class="text-uppercase text-muted d-block fw-bold" style="font-size: 0.65rem;">Nome do Aluno(a)</small>
+                <span class="fw-bold fs-5">{{ relatorio.aluno.nome_completo }}</span><br>
+                <small class="text-uppercase text-muted d-block mt-3 fw-bold" style="font-size: 0.65rem;">Turma / Série</small>
+                <span class="text-dark">{{ relatorio.aluno.turma.nome }} - {{ relatorio.aluno.turma.serie_curricular }}º Ano</span>
+            </div>
+            <div class="col-5 text-end">
+                <small class="text-uppercase text-muted d-block fw-bold" style="font-size: 0.65rem;">Referência</small>
+                <span class="fw-bold text-primary">{{ relatorio.trimestre }}º Trimestre / {{ relatorio.ano }}</span><br>
+                <small class="text-uppercase text-muted d-block mt-3 fw-bold" style="font-size: 0.65rem;">Emissão do Documento</small>
+                <span class="text-dark">{% now "d/m/Y - H:i" %}</span>
+            </div>
+        </div>
+
+        <h5 class="text-dark fw-bold text-uppercase border-bottom border-primary border-3 pb-2 mb-4" style="letter-spacing: 1px; font-size: 1rem;">
+            Acompanhamento das Aprendizagens
+        </h5>
+
+        {% for avaliacao in avaliacoes %}
+        <div class="mb-5 avoid-break">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="fw-bold text-dark mb-0">
+                    <span class="text-primary me-2">{{ avaliacao.competencia.componente }}</span>
+                    <span class="badge bg-dark px-2 py-1" style="font-size: 0.7rem;">{{ avaliacao.competencia.codigo }}</span>
+                </h6>
+            </div>
+            
+            <p class="small text-muted fst-italic mb-3 border-bottom pb-2">"{{ avaliacao.competencia.habilidade }}"</p>
+
+            <div class="ps-3 border-start border-3 border-primary-subtle">
+                <p class="mb-2 small">
+                    <strong class="text-uppercase text-muted" style="font-size: 0.7rem;">Estágio de Desenvolvimento:</strong> <br>
+                    <span class="text-primary fw-bold fs-6">{{ avaliacao.get_nivel_display }}</span>
+                </p>
+                
+                <div class="text-dark" style="text-align: justify; line-height: 1.6; font-size: 0.95rem;">
+                    <strong class="text-uppercase text-muted d-block mb-1" style="font-size: 0.7rem;">Parecer Descritivo:</strong>
+                    {% if avaliacao.observacao_especifica %}
+                        {{ avaliacao.observacao_especifica }}
+                    {% else %}
+                        <span class="text-muted small">O aluno atingiu os objetivos propostos para este período, demonstrando evolução compatível com a habilidade descrita.</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% with sugestoes=sugestoes_map|get_item:avaliacao.id %}
+                {% if sugestoes %}
+                <div class="mt-4 p-3 bg-light rounded border border-info border-opacity-25 no-break">
+                    <h6 class="fw-bold text-info text-uppercase mb-2" style="font-size: 0.7rem;">
+                        <i class="bi bi-lightbulb-fill"></i> Sugestões de Estimulação (Escola e Família):
+                    </h6>
+                    <ul class="mb-0 ps-3">
+                        {% for sug in sugestoes %}
+                        <li class="small text-dark mb-2"><strong>{{ sug.titulo }}:</strong> {{ sug.descricao }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+        {% empty %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-file-earmark-x display-1 opacity-25"></i>
+            <p class="mt-3">Aguardando lançamento das avaliações pelo professor.</p>
+        </div>
+        {% endfor %}
+
+        <div class="row mt-5 pt-5 text-center">
+            <div class="col-6">
+                <div class="border-top border-dark pt-2 mx-4 small">
+                    <strong>{{ relatorio.professor.get_full_name|default:relatorio.professor.username }}</strong><br>
+                    Professor(a) de Tecnologia
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border-top border-dark pt-2 mx-4 small">
+                    Assinatura da Coordenação Pedagógica
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalCorrecao" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg">
+            <form action="{% url 'decisao_relatorio' relatorio.id %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="acao" value="corrigir">
+                <div class="modal-header bg-danger text-white border-0">
+                    <h5 class="modal-title fw-bold">Solicitar Ajustes</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-danger border-0 small mb-3">
+                        Explique ao professor o que deve ser alterado ou complementado no relatório.
+                    </div>
+                    <label class="form-label fw-bold small">ORIENTAÇÃO PEDAGÓGICA:</label>
+                    <textarea name="motivo_devolucao" class="form-control border-2" rows="6" 
+                              placeholder="Ex: Por favor, detalhe mais o desempenho na competência de Matemática..." required></textarea>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger fw-bold px-4">Devolver para o Professor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilização para simular folha A4 */
+    #conteudo-relatorio {
+        font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+        color: #1a1a1a;
+        line-height: 1.5;
+    }
+
+    .avoid-break { page-break-inside: avoid; }
+    .no-break { break-inside: avoid; }
+
+    @media print {
+        body { background-color: white !important; padding: 0 !important; margin: 0 !important; }
+        .no-print, .btn, .navbar, footer { display: none !important; }
+        .container { max-width: 100% !important; padding: 0 !important; }
+        #conteudo-relatorio { shadow: none !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
+        /* Garante que o PDF gerado ou a impressão use fontes serifadas se preferir um ar mais clássico */
+        #conteudo-relatorio { font-family: 'Times New Roman', Times, serif; }
+    }
+</style>
+
+<script>
+    /**
+     * Gera o PDF utilizando html2pdf.js
+     * Utiliza o slugify no nome do arquivo para evitar caracteres especiais no Windows/Linux.
+     */
+    function baixarPDF() {
+        const element = document.getElementById('conteudo-relatorio');
+        const alunoNome = "{{ relatorio.aluno.nome_completo|slugify }}";
+        const tri = "{{ relatorio.trimestre }}";
+        
+        const options = {
+            margin: [10, 10, 15, 10],
+            filename: `Relatorio_${alunoNome}_Tri${tri}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(options).from(element).save();
+    }
+</script>
 {% endblock %}

@@ -3,67 +3,167 @@
 {% block title %}Avaliar - {{ aluno.nome_completo }}{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <a href="{% url 'turma_detail' aluno.turma.id %}" class="text-decoration-none text-muted">
-        <i class="bi bi-arrow-left" style="font-size: 20px;">Voltar para a Turma</i>
-    </a>
-    <h2 class="text-primary fw-bold mt-2">Avaliar: {{ aluno.nome_completo }}</h2>
-
-    <a href="{% url 'visualizar_relatorio' relatorio.id %}" class="btn btn-dark shadow-sm">
-        <i class="bi bi-file-earmark-pdf-fill"></i> Visualizar Relatório Final
-    </a>
+<div class="container pb-5">
     
-    <p class="text-muted">Relatório do 1º Trimestre de 2025 (Status: <span class="badge bg-warning text-dark">{{ relatorio.get_status_display }}</span>)</p>
-</div>
-
-<div class="row">
-    <div class="col-12 mb-3">
-        <h5 class="fw-bold"><i class="bi bi-grid-fill"></i> Selecione a Disciplina para Avaliar:</h5>
+    <div class="mb-4">
+        <a href="{% url 'turma_detail' aluno.turma.id %}" class="text-decoration-none text-muted mb-2 d-inline-block small">
+            <i class="bi bi-arrow-left"></i> Voltar para a Turma
+        </a>
+        
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h2 class="text-primary fw-bold mb-1">Avaliar: {{ aluno.nome_completo }}</h2>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-calendar3 me-1"></i> {{ relatorio.trimestre }}º Trimestre de {{ relatorio.ano }} 
+                    <span class="badge {% if relatorio.status == 'APROVADO' %}bg-success{% elif relatorio.status == 'ANALISE' %}bg-info{% else %}bg-warning text-dark{% endif %} ms-2 shadow-sm">
+                        {{ relatorio.get_status_display }}
+                    </span>
+                </p>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <a href="{% url 'catalogo_bncc_professor' %}" class="btn btn-outline-primary fw-bold shadow-sm" target="_blank">
+                    <i class="bi bi-journal-text me-1"></i> CONSULTAR COMPETÊNCIAS
+                </a>
+                <a href="{% url 'visualizar_relatorio' relatorio.id %}" class="btn btn-dark shadow-sm fw-bold">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> VISUALIZAÇÃO FINAL
+                </a>
+            </div>
+        </div>
     </div>
 
-    {% for item in materias %}
-    <div class="col-md-3 mb-4">
-        <a href="{% url 'avaliar_materia' relatorio.id item.codigo %}" class="text-decoration-none">
-            
-            <div class="card h-100 shadow-sm hover-effect text-center py-4 
-                        {% if item.concluido %}border-success bg-success bg-opacity-10{% else %}border-0 bg-light{% endif %}"
-                 style="{% if item.concluido %}border-width: 3px !important;{% endif %}">
+    {% if relatorio.status != 'RASCUNHO' and relatorio.status != 'CORRECAO' %}
+    <div class="alert alert-secondary border-start border-4 border-secondary shadow-sm mb-5 bg-white">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-lock-fill fs-2 me-3 text-secondary"></i>
+            <div>
+                <h5 class="fw-bold mb-0">Relatório Bloqueado para Edição</h5>
+                <small class="text-muted">Este documento está em status de <strong>{{ relatorio.get_status_display }}</strong> e não permite alterações no momento.</small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h5 class="fw-bold text-dark"><i class="bi bi-grid-3x3-gap-fill me-2 text-primary"></i>Componentes Curriculares</h5>
+            <p class="text-muted small">Selecione uma matéria para lançar as competências e níveis de desenvolvimento.</p>
+        </div>
+
+        {% for item in materias %}
+        <div class="col-6 col-md-4 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm border-0 position-relative hover-effect 
+                        {% if item.concluido %}bg-success bg-opacity-10 border border-success{% else %}bg-white border{% endif %}">
                 
-                <div class="card-body position-relative">
-                    
+                <a href="{% url 'avaliar_materia' relatorio.id item.codigo %}" class="stretched-link"></a>
+
+                <div class="card-body py-4 text-center">
                     {% if item.concluido %}
-                    <div class="position-absolute top-0 end-0 mt-n3 me-n3">
-                        <span class="badge rounded-circle bg-success p-2 shadow">
-                            <i class="bi bi-check-lg fs-4"></i>
+                    <div class="position-absolute top-0 end-0 mt-2 me-2">
+                        <span class="badge rounded-pill bg-success shadow-sm">
+                            <i class="bi bi-check-lg"></i>
                         </span>
                     </div>
                     {% endif %}
 
-                    <i class="bi {{ item.icone }} display-4 mb-3 
-                              {% if item.concluido %}text-success{% else %}text-primary{% endif %}"></i>
+                    {% if item.tem_notas and relatorio.status == 'RASCUNHO' or relatorio.status == 'CORRECAO' and is_periodo_ativo %}
+                    <div class="position-absolute top-0 start-0 mt-2 ms-2" style="z-index: 5;">
+                        <form action="{% url 'limpar_materia' relatorio.id item.codigo %}" method="post" 
+                              onsubmit="return confirm('ATENÇÃO: Deseja apagar todas as avaliações de {{ item.nome }}?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-link text-danger p-0" title="Limpar Matéria" onclick="event.stopPropagation();">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3 mt-2">
+                        <i class="bi {{ item.icone }} display-5 
+                                  {% if item.concluido %}text-success{% else %}text-primary opacity-75{% endif %}"></i>
+                    </div>
                     
-                    <h5 class="card-title text-dark fw-bold">{{ item.nome }}</h5>
+                    <h6 class="fw-bold text-dark mb-1">{{ item.nome }}</h6>
                     
                     {% if item.concluido %}
-                        <p class="small text-success fw-bold mb-0">
-                            <i class="bi bi-check-circle-fill"></i> Concluído!
-                        </p>
+                        <span class="badge bg-success-subtle text-success small">Finalizado</span>
+                    {% elif item.tem_notas %}
+                        <span class="badge bg-primary-subtle text-primary small border border-primary-subtle">Em andamento</span>
                     {% else %}
-                        <p class="small text-muted mb-0">Clique para abrir competências</p>
+                        <span class="text-muted small">Pendente</span>
                     {% endif %}
                 </div>
             </div>
-        </a>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-slash-circle display-4 text-muted opacity-25"></i>
+            <p class="text-muted mt-2">Nenhuma disciplina cadastrada para este nível escolar.</p>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card-body text-center">
+    <h4 class="fw-bold text-primary mb-3">Concluiu as avaliações deste aluno?</h4>
+    
+    {% if relatorio.status == 'RASCUNHO' or relatorio.status == 'CORRECAO' %}
+        
+        {% if is_periodo_ativo %}
+            
+            {% if pode_enviar %}
+                <div class="bg-white p-4 rounded-4 shadow-sm d-inline-block border border-success border-2">
+                    <h5 class="text-success fw-bold mb-3">
+                        <i class="bi bi-check-all fs-4 me-1"></i> Documento pronto para submissão!
+                    </h5>
+                    <form method="post" action="{% url 'enviar_relatorio_final' relatorio.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow-lg"
+                                onclick="return confirm('Após enviar, a coordenação analisará o documento. Confirmar?');">
+                            
+                            {% if relatorio.status == 'CORRECAO' %}
+                                <i class="bi bi-arrow-repeat me-1"></i> REENVIAR COM CORREÇÕES
+                            {% else %}
+                                <i class="bi bi-send-check-fill me-1"></i> ENVIAR RELATÓRIO AGORA
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="alert alert-light border border-primary-subtle d-inline-block px-4 py-3 shadow-sm">
+                    <i class="bi bi-info-circle-fill me-2 text-primary"></i> 
+                    <strong>Ação necessária:</strong> Preencha as notas das disciplinas pendentes para habilitar o envio.
+                </div>
+            {% endif %}
+
+        {% else %}
+            <div class="alert alert-secondary border border-secondary d-inline-block px-4 py-3 shadow-sm bg-white">
+                <i class="bi bi-archive-fill me-2 text-secondary"></i> 
+                <strong>Modo Consulta:</strong> Este relatório pertence a um período <strong>encerrado</strong>. Edições e envios não são mais permitidos.
+            </div>
+        {% endif %}
+
+    {% else %}
+        <div class="badge bg-secondary p-3 fs-6 rounded-pill shadow-sm">
+            <i class="bi bi-shield-lock me-2"></i> Relatório sob responsabilidade da coordenação ({{ relatorio.get_status_display }})
+        </div>
+    {% endif %}
+</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
-    .hover-effect:hover {
-        transform: scale(1.03);
-        background-color: #e9ecef !important;
-        transition: 0.2s;
-        border: 2px solid #0d6efd !important;
+    .hover-effect { transition: all 0.3s cubic-bezier(.25,.8,.25,1); cursor: pointer; }
+    .hover-effect:hover { 
+        transform: translateY(-8px); 
+        box-shadow: 0 12px 20px rgba(0,0,0,0.12) !important;
+        background-color: #fff !important;
     }
+    .border-dashed { border: 2px dashed #0d6efd !important; }
+    .bg-primary-subtle { background-color: #e7f1ff; }
+    .bg-success-subtle { background-color: #e1f7e3; }
 </style>
 {% endblock %}

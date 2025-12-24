@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Configurações do Sistema{% endblock %}
+
+{% block content %}
+<div class="container pb-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{% url 'dashboard' %}" class="text-decoration-none text-muted small mb-1 d-block">
+                <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
+            </a>
+            <h2 class="text-primary fw-bold mb-0">
+                <i class="bi bi-sliders"></i> Ajustes do Sistema
+            </h2>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <div class="card shadow border-0 overflow-hidden">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-calendar-event me-2"></i>Controle do Período Letivo
+                    </h5>
+                    <p class="mb-0 small opacity-75">Estas definições sincronizam os relatórios e os prazos de todos os professores.</p>
+                </div>
+                
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="ano_letivo" class="form-label fw-bold text-uppercase text-muted small">Ano Letivo Corrente</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-calendar3"></i></span>
+                                <input type="number" name="ano_letivo" id="ano_letivo" 
+                                       class="form-control fw-bold border-start-0 ps-0" 
+                                       value="{{ config.ano_letivo|default:'2025' }}" required>
+                            </div>
+                            <div class="form-text mt-2">Altere apenas na virada do ano escolar. Isso impacta o histórico de relatórios.</div>
+                        </div>
+
+                        <hr class="my-4 opacity-25">
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-uppercase text-muted small mb-3">Trimestre Ativo (Lançamento Vigente)</label>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <input type="radio" class="btn-check" name="trimestre_ativo" id="tri1" value="1" 
+                                           {% if config.trimestre_ativo|stringformat:"s" == '1' %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary w-100 py-3 fw-bold" for="tri1">
+                                        <i class="bi bi-1-circle me-1"></i> 1º Trimestre
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="radio" class="btn-check" name="trimestre_ativo" id="tri2" value="2" 
+                                           {% if config.trimestre_ativo|stringformat:"s" == '2' %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary w-100 py-3 fw-bold" for="tri2">
+                                        <i class="bi bi-2-circle me-1"></i> 2º Trimestre
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="radio" class="btn-check" name="trimestre_ativo" id="tri3" value="3" 
+                                           {% if config.trimestre_ativo|stringformat:"s" == '3' %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary w-100 py-3 fw-bold" for="tri3">
+                                        <i class="bi bi-3-circle me-1"></i> 3º Trimestre
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info d-flex align-items-start mt-4 border-0 bg-light shadow-sm" role="alert">
+                                <i class="bi bi-info-circle-fill me-3 text-primary fs-4"></i>
+                                <div class="small">
+                                    <strong>Impacto automático:</strong> Mudar o trimestre atualizará instantaneamente o 
+                                    painel dos professores, focando os novos relatórios na tela inicial.
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4 opacity-25">
+
+                        <div class="mb-4">
+                            <label for="data_fim" class="form-label fw-bold text-uppercase text-muted small">Data Limite para Lançamentos</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-white border-danger text-danger border-end-0">
+                                    <i class="bi bi-alarm"></i>
+                                </span>
+                                <input type="date" name="data_fim" id="data_fim" 
+                                       class="form-control border-danger border-start-0 ps-0 fw-bold text-danger" 
+                                       value="{{ config.data_fim|date:'Y-m-d' }}">
+                            </div>
+                            <div class="form-text mt-2 text-danger">
+                                <i class="bi bi-info-circle me-1"></i> Deixe em branco para que os professores tenham tempo livre (sem bloqueio).
+                            </div>
+                        </div>
+
+                        <div class="d-grid pt-3">
+                            <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-lg py-3">
+                                <i class="bi bi-check-circle-fill me-2"></i> APLICAR CONFIGURAÇÕES
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <p class="text-muted small">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Somente Administradores e Coordenadores podem acessar esta página.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

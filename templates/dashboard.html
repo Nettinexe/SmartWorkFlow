@@ -1,196 +1,408 @@
 {% extends 'base.html' %}
 
-{% block title %}Início{% endblock %}
+{% block title %}Início - Smart Workflow{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="text-primary fw-bold">Olá, {{ user.first_name }}!</h2>
-        <p class="text-muted mb-0" style="font-size: 20px;">{{ perfil_nome }} | Smart Workflow</p>
+        <h2 class="text-primary fw-bold mb-0">Olá, {{ user.first_name|default:user.username }}!</h2>
+        <p class="text-muted mb-0" style="font-size: 1.1rem;">{{ perfil_nome }} | Smart WorkFlow</p>
     </div>
     <div class="text-end">
-        <span class="badge bg-light text-dark border p-2">
-            <i class="bi bi-calendar-event"></i> Ano Letivo 2026
+        <span class="badge bg-white text-primary border border-primary p-2 shadow-sm">
+            <i class="bi bi-calendar-check me-1"></i> {{ trimestre_exibido }}º Trimestre de {{ ano_ativo }}
         </span>
     </div>
 </div>
 
 {% if not is_professor %}
-
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card shadow-sm border-start border-4 border-primary h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted text-uppercase small fw-bold">Total de Alunos</h6>
-                        <h2 class="mb-0 fw-bold text-dark">{{ total_alunos }}</h2>
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 border-start border-4 border-primary h-100">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small fw-bold">Total de Alunos</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0 fw-bold">{{ total_alunos }}</h2>
+                        <i class="bi bi-people fs-1 text-primary opacity-25"></i>
                     </div>
-                    <i class="bi bi-people display-6 text-primary opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 border-start border-4 border-info h-100">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small fw-bold">Turmas Ativas</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0 fw-bold">{{ total_turmas }}</h2>
+                        <i class="bi bi-door-open fs-1 text-info opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 border-start border-4 border-warning h-100">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small fw-bold">Análise Pendente</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0 fw-bold">{{ qtd_relatorios_pendentes }}</h2>
+                        <i class="bi bi-hourglass-split fs-1 text-warning opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 border-start border-4 border-secondary h-100">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small fw-bold">Em Produção</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0 fw-bold">{{ relatorios_em_producao }}</h2>
+                        <i class="bi bi-pencil-square fs-1 text-secondary opacity-25"></i>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card shadow-sm border-start border-4 border-info h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted text-uppercase small fw-bold">Turmas Ativas</h6>
-                        <h2 class="mb-0 fw-bold text-dark">{{ total_turmas }}</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
+        <div>
+            <h4 class="fw-bold text-dark mb-0"><i class="bi bi-shield-check text-primary me-2"></i>Centro de Moderação</h4>
+            <p class="text-muted small mb-0">Gerencie as entregas e o banco de atividades oficiais.</p>
+        </div>
+        <button class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovaSugestaoCoord">
+            <i class="bi bi-plus-circle me-1"></i> Nova Atividade Oficial
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-5 overflow-hidden">
+        <div class="card-header bg-light p-0">
+            <ul class="nav nav-tabs nav-fill border-bottom-0" id="dashTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active py-3 fw-bold" id="pendentes-tab" data-bs-toggle="tab" data-bs-target="#pendentes" type="button">
+                        <i class="bi bi-clipboard-check me-2 text-warning"></i>Relatórios Pendentes
+                        {% if qtd_relatorios_pendentes > 0 %}
+                            <span class="badge rounded-pill bg-warning text-dark ms-1">{{ qtd_relatorios_pendentes }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link py-3 fw-bold" id="sugestoes-novas-tab" data-bs-toggle="tab" data-bs-target="#sugestoes-novas" type="button">
+                        <i class="bi bi-lightbulb me-2 text-info"></i>Sugestões Pendentes
+                        {% if qtd_sugestoes_pendentes > 0 %}
+                            <span class="badge rounded-pill bg-info text-dark ms-1">{{ qtd_sugestoes_pendentes }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link py-3 fw-bold" id="historico-tab" data-bs-toggle="tab" data-bs-target="#historico" type="button">
+                        <i class="bi bi-archive me-2 text-secondary"></i>Todos os relatórios
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link py-3 fw-bold" id="banco-tab" data-bs-toggle="tab" data-bs-target="#banco" type="button">
+                        <i class="bi bi-database me-2 text-dark"></i>Sugestões Cadastradas
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="tab-content" id="dashTabsContent">
+                <div class="tab-pane fade show active" id="pendentes" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Aluno</th>
+                                    <th>Turma</th>
+                                    <th>Professor</th>
+                                    <th class="text-end pe-4">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in lista_relatorios_pendentes %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">{{ item.aluno.nome_completo }}</td>
+                                    <td><span class="badge bg-light text-dark border">{{ item.aluno.turma.nome }}</span></td>
+                                    <td>{{ item.professor.get_full_name|default:item.professor.username }}</td>
+                                    <td class="text-end pe-4">
+                                        <a href="{% url 'visualizar_relatorio' item.id %}" class="btn btn-warning btn-sm fw-bold px-3">Revisar</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center py-5 text-muted">Nenhum relatório aguardando análise.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
-                    <i class="bi bi-door-open display-6 text-info opacity-50"></i>
+                </div>
+
+                <div class="tab-pane fade" id="sugestoes-novas" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Atividade</th>
+                                    <th>Código</th>
+                                    <th>Autor</th>
+                                    <th class="text-end pe-4">Decisão</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sug in lista_sugestoes_pendentes %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <a href="{% url 'detalhe_sugestao' sug.id %}" class="fw-bold text-decoration-none">
+                                            {{ sug.titulo }} <i class="bi bi-box-arrow-up-right small ms-1"></i>
+                                        </a>
+                                    </td>
+                                    <td><span class="badge border text-dark bg-white">{{ sug.competencia.codigo }}</span></td>
+                                    <td>{{ sug.professor_autor.first_name }}</td>
+                                    <td class="text-end pe-4">
+                                        <div class="btn-group">
+                                            <a href="{% url 'aprovar_sugestao' sug.id 'aprovada' %}" class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i></a>
+                                            <a href="{% url 'aprovar_sugestao' sug.id 'rejeitada' %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Rejeitar sugestão?');"><i class="bi bi-x-lg"></i></a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center py-5 text-muted">Nenhuma sugestão pendente.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="historico" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Aluno</th>
+                                    <th>Período</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-4">Ver</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rel in historico_relatorios %}
+                                <tr>
+                                    <td class="ps-4 text-dark">{{ rel.aluno.nome_completo }} <br> <small class="text-muted">{{ rel.aluno.turma.nome }}</small></td>
+                                    <td>{{ rel.trimestre }}º Tri</td>
+                                    <td>
+                                        {% if rel.status == 'APROVADO' %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2">APROVADO</span>
+                                        {% elif rel.status == 'ANALISE' %}
+                                            <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-2">EM ANÁLISE</span>
+                                        {% elif rel.status == 'CORRECAO' %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2">DEVOLVIDO</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-secondary border px-2">RASCUNHO</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="{% url 'visualizar_relatorio' rel.id %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-eye"></i></a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="banco" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr><th class="ps-4">Atividade</th><th>Nível Alvo</th><th>Status</th><th class="text-end pe-4">Ação</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for sug in banco_sugestoes %}
+                                <tr>
+                                    <td class="ps-4"><div class="fw-bold">{{ sug.titulo }}</div><small class="text-muted">{{ sug.competencia.codigo }}</small></td>
+                                    <td><span class="badge bg-light text-dark border">Nível {{ sug.nivel_alvo }}</span></td>
+                                    <td>{% if sug.status == 'APROVADO' %}<span class="text-success small fw-bold"><i class="bi bi-check-circle-fill"></i> Ativa</span>{% else %}<span class="text-muted small">Inativa</span>{% endif %}</td>
+                                    <td class="text-end pe-4"><a href="{% url 'detalhe_sugestao' sug.id %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i></a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card shadow-sm border-start border-4 border-warning h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted text-uppercase small fw-bold">Aprovações Pendentes</h6>
-                        <h2 class="mb-0 fw-bold text-dark">{{ sugestoes_pendentes }}</h2>
-                    </div>
-                    <i class="bi bi-exclamation-circle display-6 text-warning opacity-50"></i>
-                </div>
-            </div>
-        </div>
+    <div class="d-flex gap-2 flex-wrap mb-5">
+        <a href="{% url 'gestao_competencias' %}" class="btn btn-secondary shadow-sm"><i class="bi bi-journal-bookmark-fill me-2"></i> Painel de competências</a>
+        <a href="{% url 'configuracoes_sistema' %}" class="btn btn-primary shadow-sm"><i class="bi bi-sliders me-2"></i> Prazos</a>
+        <a href="{% url 'gestao_escolar' %}" class="btn btn-info text-white shadow-sm fw-bold"><i class="bi bi-people-fill me-2"></i> Turmas,Alunos e Professores</a>
+        <a href="/admin/" class="btn btn-outline-secondary"><i class="bi bi-gear-fill me-2"></i> Admin</a>
     </div>
 
-    <div class="col-md-3">
-        <div class="card shadow-sm border-start border-4 border-success h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted text-uppercase small fw-bold">Relatórios em Andamento</h6>
-                        <h2 class="mb-0 fw-bold text-dark">{{ relatorios_pendentes }}</h2>
+    <div class="modal fade" id="modalNovaSugestaoCoord" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow">
+                <form action="{% url 'criar_sugestao_coordenador' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title fw-bold">Nova Atividade Oficial</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <i class="bi bi-graph-up display-6 text-success opacity-50"></i>
-                </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Código BNCC</label>
+                            <input type="text" name="codigo_bncc" class="form-control text-uppercase fw-bold" placeholder="Ex: EF06LP01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Título</label>
+                            <input type="text" name="titulo" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nível Alvo</label>
+                            <select name="nivel_alvo" class="form-select" required>
+                                <option value="1">Nível 1</option><option value="2">Nível 2</option><option value="3">Nível 3</option><option value="4">Nível 4</option><option value="5">Nível 5</option>
+                            </select>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">Descrição</label>
+                            <textarea name="descricao" class="form-control" rows="4" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="submit" class="btn btn-success fw-bold px-4">Publicar</button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
-</div>
-
-<h5 class="fw-bold mb-3"><i class="bi bi-lightning-charge-fill text-warning"></i> Ações Rápidas</h5>
-<div class="row">
-    <div class="col-md-4 mb-3">
-        <a href="{% url 'area_coordenacao' %}" class="btn btn-outline-primary w-100 p-4 shadow-sm text-start hover-card">
-            <i class="bi bi-briefcase-fill fs-3 d-block mb-2"></i>
-            <span class="fw-bold h5">Painel Pedagógico</span>
-            <p class="mb-0 small text-muted">Aprovar sugestões e revisar atividades.</p>
-        </a>
-    </div>
-    
-    <div class="col-md-4 mb-3">
-        <a href="/admin/" class="btn btn-outline-dark w-100 p-4 shadow-sm text-start hover-card">
-            <i class="bi bi-gear-fill fs-3 d-block mb-2"></i>
-            <span class="fw-bold h5">Administração Técnica</span>
-            <p class="mb-0 small text-muted">Cadastrar alunos, turmas e professores.</p>
-        </a>
     </div>
 
 {% else %}
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
+        <div class="d-flex align-items-center">
+            <span class="text-muted fw-bold me-3 small text-uppercase">Visualizando:</span>
+            <div class="btn-group shadow-sm">
+                <a href="?tri=1" class="btn btn-sm {% if trimestre_exibido == '1' %}btn-primary{% else %}btn-outline-secondary{% endif %} px-3">1º Tri</a>
+                <a href="?tri=2" class="btn btn-sm {% if trimestre_exibido == '2' %}btn-primary{% else %}btn-outline-secondary{% endif %} px-3">2º Tri</a>
+                <a href="?tri=3" class="btn btn-sm {% if trimestre_exibido == '3' %}btn-primary{% else %}btn-outline-secondary{% endif %} px-3">3º Tri</a>
+            </div>
+            {% if trimestre_exibido != trimestre_ativo %}
+                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-3"><i class="bi bi-clock-history me-1"></i> Modo Histórico</span>
+            {% endif %}
+        </div>
 
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card shadow-sm border-start border-4 border-primary h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted text-uppercase small fw-bold">Meus Alunos</h6>
-                        <h2 class="mb-0 fw-bold text-dark">{{ total_alunos }}</h2>
+        {% if trimestre_exibido == trimestre_ativo and data_fim %}
+            <div class="text-end">
+                {% if alerta_prazo == 'ENCERRADO' %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6 px-3"><i class="bi bi-x-circle-fill me-1"></i> PRAZO ENCERRADO</span>
+                {% elif alerta_prazo == 'HOJE' %}
+                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle fs-6 px-3 animate-pulse"><i class="bi bi-exclamation-triangle-fill me-1"></i> É HOJE!</span>
+                {% else %}
+                    <div class="d-flex align-items-center bg-primary bg-opacity-10 p-2 rounded border border-primary border-opacity-25">
+                        <div class="text-end me-3"><h5 class="fw-bold text-primary mb-0">{{ dias_restantes }} dias</h5><small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Para o fechamento</small></div>
+                        <i class="bi bi-calendar-check-fill fs-3 text-primary"></i>
                     </div>
-                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle">
-                        <i class="bi bi-people-fill text-primary fs-4"></i>
-                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-primary h-100">
+                <div class="card-body py-4 d-flex justify-content-between align-items-center">
+                    <div><h6 class="text-muted text-uppercase small fw-bold mb-1">Meus Alunos</h6><h2 class="mb-0 fw-bold">{{ total_alunos }}</h2></div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle"><i class="bi bi-people-fill text-primary fs-3"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-info h-100">
+                <div class="card-body py-4 d-flex justify-content-between align-items-center">
+                    <div><h6 class="text-muted text-uppercase small fw-bold mb-1">Em Produção</h6><h2 class="mb-0 fw-bold">{{ iniciados }}</h2></div>
+                    <div class="bg-info bg-opacity-10 p-3 rounded-circle"><i class="bi bi-pencil-fill text-info fs-3"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-danger h-100">
+                <div class="card-body py-4 d-flex justify-content-between align-items-center">
+                    <div><h6 class="text-muted text-uppercase small fw-bold mb-1">Não Iniciados</h6><h2 class="mb-0 fw-bold text-danger">{{ pendentes }}</h2></div>
+                    <div class="bg-danger bg-opacity-10 p-3 rounded-circle"><i class="bi bi-exclamation-triangle-fill text-danger fs-3"></i></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card shadow-sm border-start border-4 border-info h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted text-uppercase small fw-bold">Avaliações Iniciadas</h6>
-                        <h2 class="mb-0 fw-bold text-dark">{{ iniciados }}</h2>
-                    </div>
-                    <div class="bg-info bg-opacity-10 p-3 rounded-circle">
-                        <i class="bi bi-pencil-fill text-info fs-4"></i>
-                    </div>
+    <h6 class="fw-bold text-muted text-uppercase mb-3 small mt-4"><i class="bi bi-stoplights"></i> Monitoramento de Entregas</h6>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-warning bg-opacity-10 h-100 text-center py-4">
+                <i class="bi bi-hourglass-split fs-1 text-warning mb-2"></i>
+                <h3 class="fw-bold mb-0">{{ qtd_enviados }}</h3>
+                <p class="small text-muted fw-bold mb-0 text-uppercase">Aguardando Análise</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-danger bg-opacity-10 h-100 text-center py-4">
+                <div class="position-relative d-inline-block mb-2">
+                    <i class="bi bi-arrow-counterclockwise fs-1 text-danger"></i>
+                    {% if qtd_correcao > 0 %}<span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle"></span>{% endif %}
                 </div>
+                <h3 class="fw-bold mb-0 text-danger">{{ qtd_correcao }}</h3>
+                <p class="small text-danger fw-bold mb-0 text-uppercase">Precisam de Correção</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-success bg-opacity-10 h-100 text-center py-4">
+                <i class="bi bi-check-circle-fill fs-1 text-success mb-2"></i>
+                <h3 class="fw-bold mb-0 text-success">{{ qtd_aprovados }}</h3>
+                <p class="small text-success fw-bold mb-0 text-uppercase">Relatórios Aprovados</p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card shadow-sm border-start border-4 border-danger h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted text-uppercase small fw-bold">Não Iniciados</h6>
-                        <h2 class="mb-0 fw-bold text-danger">{{ pendentes }}</h2>
+    <h5 class="fw-bold mb-3"><i class="bi bi-easel2-fill text-primary"></i> Minhas Turmas</h5>
+    <div class="row g-4 mb-5">
+        {% for item in turmas_data %}
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-0 border-top border-4 border-primary hover-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <h5 class="fw-bold text-dark mb-0">{{ item.turma.nome }}</h5>
+                        <span class="badge bg-light text-dark border">{{ ano_ativo }}</span>
                     </div>
-                    <div class="bg-danger bg-opacity-10 p-3 rounded-circle">
-                        <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Progresso</span><span class="fw-bold">{{ item.porcentagem_concluido }}%</span></div>
+                        <div class="progress" style="height: 6px;"><div class="progress-bar" style="width: {{ item.porcentagem_concluido }}%"></div></div>
                     </div>
-                </div>
-                <div class="mt-2">
-                    <small class="text-muted" style="font-size: 0.75rem;">
-                        Alunos que você ainda não avaliou.
-                    </small>
+                    <a href="{% url 'turma_detail' item.turma.id %}" class="btn btn-primary w-100">Ver Alunos <i class="bi bi-arrow-right ms-1"></i></a>
                 </div>
             </div>
         </div>
+        {% empty %}
+        <div class="col-12"><div class="alert alert-info text-center py-5"><i class="bi bi-info-circle fs-1 d-block mb-3"></i><h5>Nenhuma turma vinculada.</h5></div></div>
+        {% endfor %}
     </div>
-</div>
-
-<h5 class="fw-bold mb-3"><i class="bi bi-easel2-fill"></i> Minhas Turmas</h5>
-<div class="row">
-    {% for turma in turmas %}
-    <div class="col-md-4 mb-4">
-        <div class="card shadow-sm h-100 border-start border-4 border-primary hover-card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <h5 class="card-title fw-bold text-dark">{{ turma.nome }}</h5>
-                    <span class="badge bg-light text-dark border">{{ turma.ano_letivo }}</span>
-                </div>
-                
-                <p class="card-text text-muted small mt-2">
-                    <i class="bi bi-book-half"></i> Currículo: <strong>{{ turma.get_serie_curricular_display }}</strong>
-                </p>
-                
-                <hr>
-                
-                <a href="{% url 'turma_detail' turma.id %}" class="btn btn-primary w-100">
-                    <i class="bi bi-people-fill"></i> Ver Alunos
-                </a>
-            </div>
-        </div>
-    </div>
-    {% empty %}
-    <div class="col-12">
-        <div class="alert alert-info text-center py-5">
-            <i class="bi bi-info-circle display-4 d-block mb-3"></i>
-            <h4>Nenhuma turma vinculada</h4>
-            <p>Você ainda não foi adicionado a nenhuma turma. Solicite à coordenação.</p>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
 {% endif %}
 
 <style>
-    .hover-card:hover {
-        transform: translateY(-5px);
-        transition: 0.3s;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-    }
+    .hover-card { transition: transform 0.3s, box-shadow 0.3s; }
+    .hover-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    .animate-pulse { animation: pulse-red 2s infinite; }
+    @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 </style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        if (tab === 'sugestoes') {
+            const triggerEl = document.querySelector('#sugestoes-novas-tab');
+            if (triggerEl) { new bootstrap.Tab(triggerEl).show(); }
+        }
+    });
+</script>
 {% endblock %}

@@ -1,80 +1,164 @@
 {% extends 'base.html' %}
 
-{% block title %}Alunos - {{ turma.nome }}{% endblock %}
+{% block title %}Turma {{ turma.nome }} - Smart Workflow{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <a href="{% url 'dashboard' %}" class="text-decoration-none text-muted">
-        <i class="bi bi-arrow-left" style="font-size: 20px">Voltar ao Painel</i> 
-    </a>
-    <h2 class="text-primary fw-bold mt-2">{{ turma.nome }}</h2>
-    <span class="badge bg-secondary">{{ turma.get_serie_curricular_display }}</span>
-</div>
-
-<div class="card shadow-sm">
-    <div class="card-header bg-light">
-        <h5 class="mb-0"><i class="bi bi-people"></i> Lista de Estudantes</h5>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col" class="ps-4">Nome do Aluno</th>
-                        <th scope="col">Status (1º Tri)</th>
-                        <th scope="col" class="text-end pe-4">Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for aluno in alunos %}
-                    <tr>
-                        <td class="ps-4 fw-bold text-dark">
-                            {{ aluno.nome_completo }}
-                        </td>
-                        <td style="width: 30%;">
-                            {% if aluno.progresso_calculado > 0 %}
-                                <div class="d-flex align-items-center">
-                                    <div class="progress flex-grow-1 shadow-sm" style="height: 8px; border-radius: 10px;">
-                                        <div class="progress-bar bg-{{ aluno.status_cor }} progress-bar-striped" 
-                                             role="progressbar" 
-                                             style="width: {{ aluno.progresso_calculado }}%;">
-                                        </div>
-                                    </div>
-                                    <span class="ms-2 small fw-bold text-{{ aluno.status_cor }}">
-                                        {{ aluno.progresso_calculado }}%
-                                    </span>
-                                </div>
-                                
-                                <div class="small text-muted mt-1" style="font-size: 0.75rem;">
-                                    {% if aluno.progresso_calculado == 100 %}
-                                        <i class="bi bi-check-all text-success"></i> Completo
-                                    {% else %}
-                                        Em andamento...
-                                    {% endif %}
-                                </div>
-
-                            {% else %}
-                                <span class="badge bg-light text-muted border">
-                                    <i class="bi bi-circle"></i> Não Iniciado
-                                </span>
-                            {% endif %}
-                        </td>
-                        <td class="text-end pe-4">
-                            <a href="{% url 'avaliar_aluno' aluno.id %}" class="btn btn-primary btn-sm">
-                                <i class="bi bi-pencil-square"></i> Avaliar
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" class="text-center py-5 text-muted">
-                            Nenhum aluno cadastrado nesta turma ainda.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="container pb-5">
+    
+    <div class="row align-items-center mb-4">
+        <div class="col-md-7">
+            <nav aria-label="breadcrumb" class="no-print">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-decoration-none">Início</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ turma.nome }}</li>
+                </ol>
+            </nav>
+            <h2 class="text-primary fw-bold mb-0">
+                <i class="bi bi-mortarboard-fill me-2"></i>{{ turma.nome }}
+            </h2>
+            <p class="text-muted mb-0">
+                {{ turma.get_serie_curricular_display }} • Ano Letivo {{ turma.ano_letivo }}
+            </p>
+        </div>
+        
+        <div class="col-md-5 text-md-end mt-3 mt-md-0">
+            <div class="btn-group shadow-sm border rounded" role="group">
+                <a href="?tri=1" class="btn btn-sm py-2 px-3 {% if trimestre_atual == '1' %}btn-primary fw-bold{% else %}btn-white text-muted{% endif %}">
+                    1º Tri
+                </a>
+                <a href="?tri=2" class="btn btn-sm py-2 px-3 {% if trimestre_atual == '2' %}btn-primary fw-bold{% else %}btn-white text-muted{% endif %}">
+                    2º Tri
+                </a>
+                <a href="?tri=3" class="btn btn-sm py-2 px-3 {% if trimestre_atual == '3' %}btn-primary fw-bold{% else %}btn-white text-muted{% endif %}">
+                    3º Tri
+                </a>
+            </div>
+            
+            {% if trimestre_atual != trimestre_sistema %}
+                <div class="mt-2">
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2">
+                        <i class="bi bi-archive-fill me-1"></i> MODO CONSULTA (HISTÓRICO)
+                    </span>
+                </div>
+            {% endif %}
         </div>
     </div>
+
+    <div class="card shadow-sm border-0 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="ps-4 py-3">Estudante</th>
+                            <th class="text-center py-3">Situação do Documento</th>
+                            <th class="text-center py-3" style="width: 20%;">Progresso</th>
+                            <th class="text-end pe-4 py-3">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in alunos %}
+                        <tr class="{% if item.progresso == 100 %}bg-light bg-opacity-25{% endif %}">
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" 
+                                         style="width: 42px; height: 42px; font-size: 0.9rem;">
+                                        {{ item.aluno.nome_completo|slice:":2"|upper }}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold text-dark">{{ item.aluno.nome_completo }}</h6>
+                                        <small class="text-muted">Matrícula: {{ item.aluno.matricula|default:"--" }}</small>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="text-center">
+                                <span class="badge bg-{{ item.cor }}-subtle text-{{ item.cor }} border border-{{ item.cor }}-subtle px-3 py-2 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                                    {% if item.cor == 'success' %}<i class="bi bi-check-circle-fill me-1"></i>
+                                    {% elif item.cor == 'warning' %}<i class="bi bi-pencil-fill me-1"></i>
+                                    {% elif item.cor == 'danger' %}<i class="bi bi-exclamation-octagon-fill me-1"></i>
+                                    {% elif item.cor == 'info' %}<i class="bi bi-hourglass-split me-1"></i>
+                                    {% endif %}
+                                    {{ item.status|upper }}
+                                </span>
+                            </td>
+
+                            <td class="px-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1" style="height: 6px; border-radius: 10px;">
+                                        <div class="progress-bar bg-{{ item.cor }}" role="progressbar" 
+                                             style="width: {{ item.progresso }}%;" 
+                                             aria-valuenow="{{ item.progresso }}" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <span class="ms-2 fw-bold text-muted" style="font-size: 0.75rem;">{{ item.progresso }}%</span>
+                                </div>
+                            </td>
+
+                            <td class="text-end pe-4">
+                                {% if item.relatorio_id or trimestre_atual == trimestre_sistema %}
+                                    <a href="{% url 'avaliar_aluno' item.aluno.id %}?tri={{ trimestre_atual }}" 
+                                       class="btn btn-sm fw-bold px-3 shadow-sm 
+                                       {% if item.progresso == 100 %}btn-outline-dark{% else %}btn-primary{% endif %}">
+                                        
+                                        {% if item.progresso == 100 %}
+                                            <i class="bi bi-file-earmark-text me-1"></i> Ver/Revisar
+                                        {% elif item.progresso > 0 %}
+                                            <i class="bi bi-pencil-square me-1"></i> Continuar
+                                        {% else %}
+                                            <i class="bi bi-play-circle-fill me-1"></i> Iniciar
+                                        {% endif %}
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-light btn-sm text-muted border px-3" disabled>
+                                        <i class="bi bi-lock me-1"></i> Sem Registro
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <i class="bi bi-people display-4 text-muted opacity-25"></i>
+                                <p class="text-muted mt-3 fw-bold">Nenhum aluno matriculado nesta turma.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-4 no-print">
+        <a href="{% url 'dashboard' %}" class="btn btn-link text-decoration-none text-muted p-0 fw-bold small">
+            <i class="bi bi-chevron-double-left"></i> VOLTAR AO PAINEL PRINCIPAL
+        </a>
+    </div>
+
 </div>
+
+<style>
+    /* Estilos de Cores Sutis (Subtle) para Bootstrap 5.3 se não estiverem no CSS principal */
+    .bg-success-subtle { background-color: #d1e7dd; }
+    .text-success { color: #0f5132; }
+    .border-success-subtle { border-color: #badbcc; }
+
+    .bg-warning-subtle { background-color: #fff3cd; }
+    .text-warning { color: #664d03; }
+    .border-warning-subtle { border-color: #ffecb5; }
+
+    .bg-danger-subtle { background-color: #f8d7da; }
+    .text-danger { color: #842029; }
+    .border-danger-subtle { border-color: #f5c2c7; }
+
+    .bg-info-subtle { background-color: #cff4fc; }
+    .text-info { color: #055160; }
+    .border-info-subtle { border-color: #b6effb; }
+
+    /* Hover na linha da tabela */
+    .table-hover tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.03);
+    }
+</style>
 {% endblock %}

@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Análise de Sugestão - Smart Workflow{% endblock %}
+
+{% block content %}
+<div class="container pb-5">
+    
+    <div class="mb-4">
+        <a href="{% url 'dashboard' %}?tab=sugestoes" class="text-decoration-none text-muted small fw-bold">
+            <i class="bi bi-arrow-left"></i> VOLTAR PARA A FILA DE MODERAÇÃO
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            
+            <div class="card shadow-sm border-0 mb-4 overflow-hidden">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-3 py-2">
+                            <i class="bi bi-hourglass-split me-1"></i> AGUARDANDO MODERAÇÃO
+                        </span>
+                    </div>
+                    <div class="text-end text-muted small">
+                        <i class="bi bi-calendar3 me-1"></i> Recebido em: <strong>{{ sugestao.data_envio|date:"d/m/Y" }}</strong>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="fw-bold text-primary mb-4">{{ sugestao.titulo }}</h2>
+                    
+                    <div class="d-flex align-items-center mb-5 p-3 bg-light rounded-4 border">
+                        <div class="me-3">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" 
+                                 style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                {{ sugestao.professor_autor.first_name|slice:":1"|upper }}
+                            </div>
+                        </div>
+                        <div>
+                            <p class="mb-0 fw-bold text-dark" style="font-size: 1.1rem;">
+                                Prof. {{ sugestao.professor_autor.get_full_name|default:sugestao.professor_autor.username }}
+                            </p>
+                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Autor da Proposta Pedagógica</small>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold mb-2 d-block">Vínculo Curricular (BNCC)</label>
+                            <div class="p-3 border rounded-3 bg-white shadow-sm h-100">
+                                <span class="badge bg-dark mb-2">{{ sugestao.competencia.codigo }}</span>
+                                <p class="mb-0 small fw-medium text-dark">{{ sugestao.competencia.habilidade }}</p>
+                                <hr class="my-2 opacity-10">
+                                <span class="text-primary small fw-bold">{{ sugestao.competencia.componente }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold mb-2 d-block">Estratégia de Intervenção</label>
+                            <div class="p-3 border rounded-3 bg-primary bg-opacity-10 shadow-sm h-100">
+                                <p class="mb-1 small text-muted">Recomendada para alunos no:</p>
+                                <h5 class="text-primary fw-bold mb-0">
+                                    <i class="bi bi-bar-chart-fill me-1"></i> {{ sugestao.get_nivel_alvo_display }}
+                                </h5>
+                                <div class="mt-2 small text-dark opacity-75">
+                                    Esta atividade será sugerida automaticamente pelo sistema em relatórios com este nível.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                            <i class="bi bi-file-earmark-text text-primary me-2"></i>Metodologia e Aplicação
+                        </h5>
+                        <div class="bg-white p-4 rounded border" style="white-space: pre-wrap; line-height: 1.8; text-align: justify; font-size: 1.05rem; color: #333;">{{ sugestao.descricao }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow border-0 bg-white">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <h4 class="fw-bold text-dark mb-1">Parecer da Coordenação</h4>
+                        <p class="text-muted">Analise se a descrição está clara e se o nível está adequado à habilidade.</p>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="{% url 'aprovar_sugestao' sugestao.id 'rejeitada' %}" 
+                               class="btn btn-outline-danger w-100 py-3 fw-bold border-2"
+                               onclick="return confirm('Confirmar rejeição? Esta ideia não será publicada no banco de atividades.');">
+                                <i class="bi bi-x-circle-fill me-2"></i> REJEITAR PROPOSTA
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'aprovar_sugestao' sugestao.id 'aprovada' %}" 
+                               class="btn btn-success w-100 py-3 fw-bold shadow border-0"
+                               onclick="return confirm('Deseja publicar esta atividade? Ela ficará disponível para todos os professores.');">
+                                <i class="bi bi-check-circle-fill me-2"></i> APROVAR E PUBLICAR
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Ajuste para garantir que o pre-wrap não quebre o layout em telas menores */
+    .card-body div[style*="white-space: pre-wrap"] {
+        word-break: break-word;
+    }
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white !important;
+    }
+</style>
+{% endblock %}

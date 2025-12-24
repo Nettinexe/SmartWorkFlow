@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}Banco de Competências BNCC - Smart Workflow{% endblock %}
+
+{% block content %}
+<div class="container pb-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{% url 'dashboard' %}" class="text-decoration-none text-muted small mb-1 d-block">
+                <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
+            </a>
+            <h2 class="text-primary fw-bold mb-0">
+                <i class="bi bi-journal-bookmark-fill me-2"></i>Banco de Competências (BNCC)
+            </h2>
+        </div>
+        
+        {% if not somente_leitura %}
+        <button class="btn btn-success shadow-sm fw-bold px-4" data-bs-toggle="modal" data-bs-target="#modalCompetencia">
+            <i class="bi bi-plus-lg me-1"></i> Nova Competência
+        </button>
+        {% endif %}
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4 bg-white">
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-muted text-uppercase">Componente Curricular</label>
+                    <select name="filtro_materia" class="form-select border-2">
+                        <option value="">Todos os Componentes</option>
+                        {% for mat in materias %}
+                            <option value="{{ mat }}" {% if request.GET.filtro_materia == mat %}selected{% endif %}>{{ mat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label fw-bold small text-muted text-uppercase">Pesquisar Habilidade</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-2 border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" name="busca" class="form-control border-2 border-start-0" 
+                               placeholder="Ex: EF06LP01 ou 'frações'..." value="{{ busca_ativa|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary fw-bold w-100 py-2">
+                        FILTRAR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-body p-0">
+            {% if aviso_limite %}
+            <div class="alert alert-warning m-3 py-2 border-0 shadow-sm d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                <div class="small">
+                    <strong>Aviso de Performance:</strong> Exibindo apenas as primeiras 50 competências. 
+                    Utilize os filtros acima para localizar uma habilidade específica.
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th class="ps-4 py-3">Código</th>
+                            <th class="py-3">Componente</th>
+                            <th class="py-3" style="width: 45%;">Descrição da Habilidade (BNCC)</th>
+                            <th class="py-3">Anos / Séries</th>
+                            {% if not somente_leitura %}
+                            <th class="text-end pe-4 py-3">Ações</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        {% for comp in competencias %}
+                        <tr>
+                            <td class="ps-4">
+                                <span class="badge bg-dark fw-bold px-3 py-2">{{ comp.codigo }}</span>
+                            </td>
+                            <td><span class="fw-bold text-primary">{{ comp.componente }}</span></td>
+                            <td>
+                                <div class="text-dark small" style="line-height: 1.4;">
+                                    {{ comp.habilidade|truncatechars:200 }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1 flex-wrap">
+                                    {% for ano in comp.anos_aplicacao %}
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle">{{ ano }}º</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            {% if not somente_leitura %}
+                            <td class="text-end pe-4">
+                                <div class="btn-group shadow-sm">
+                                    <button class="btn btn-light btn-sm border" data-bs-toggle="modal" 
+                                            data-bs-target="#modalComp{{ comp.id }}" title="Editar Habilidade">
+                                        <i class="bi bi-pencil-square text-primary"></i>
+                                    </button>
+                                    <a href="{% url 'excluir_competencia' comp.id %}" class="btn btn-light btn-sm border" 
+                                       onclick="return confirm('Deseja excluir permanentemente a habilidade {{ comp.codigo }}?');" title="Excluir">
+                                        <i class="bi bi-trash3-fill text-danger"></i>
+                                    </a>
+                                </div>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <i class="bi bi-search display-1 text-muted opacity-25"></i>
+                                <p class="mt-3 text-muted fw-bold">Nenhum registro encontrado para estes critérios.</p>
+                                <a href="{% url 'gestao_competencias' %}" class="btn btn-link text-decoration-none">Limpar todos os filtros</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not somente_leitura %}
+    
+    <div class="modal fade" id="modalCompetencia" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg border-0">
+            <div class="modal-content shadow-lg border-0">
+                <form action="{% url 'criar_competencia' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="modal-header bg-success text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Nova Competência BNCC</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Código BNCC</label>
+                                {{ form_competencia.codigo }}
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold">Componente Curricular</label>
+                                {{ form_competencia.componente }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Anos de Aplicação (Público-alvo)</label>
+                                <div class="bg-light p-3 rounded-3 border">
+                                    {{ form_competencia.anos_selecao }}
+                                </div>
+                                <small class="text-muted">Marque todos os anos em que esta habilidade pode ser trabalhada.</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Descrição da Habilidade</label>
+                                {{ form_competencia.habilidade }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success fw-bold px-4">Salvar no Banco</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% for comp in competencias %}
+    <div class="modal fade" id="modalComp{{ comp.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg shadow">
+            <div class="modal-content border-0">
+                <form action="{% url 'editar_competencia' comp.id %}" method="POST">
+                    {% csrf_token %}
+                    <div class="modal-header bg-primary text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar {{ comp.codigo }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Código</label>
+                                <input type="text" name="codigo" class="form-control fw-bold text-uppercase" value="{{ comp.codigo }}" required>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold">Componente</label>
+                                <select name="componente" class="form-select">
+                                    {% for mat in materias %}
+                                        <option value="{{ mat }}" {% if comp.componente == mat %}selected{% endif %}>{{ mat }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold d-block mb-2">Anos de Aplicação</label>
+                                <div class="d-flex gap-3 flex-wrap bg-light p-3 rounded-3 border">
+                                    {% for i in "123456789" %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="anos_selecao" value="{{ i }}" 
+                                               id="ano{{ comp.id }}{{ i }}" {% if i in comp.anos_aplicacao %}checked{% endif %}>
+                                        <label class="form-check-label fw-medium" for="ano{{ comp.id }}{{ i }}">{{ i }}º Ano</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Descrição Completa</label>
+                                <textarea name="habilidade" class="form-control" rows="6">{{ comp.habilidade }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<style>
+    /* Estilo para truncar texto sem quebrar o layout da tabela */
+    .table td div.text-muted {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+</style>
+{% endblock %}

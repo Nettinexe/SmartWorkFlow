@@ -1,55 +1,78 @@
 {% extends 'base.html' %}
 
-{% block title %}Sugerir Atividade{% endblock %}
+{% block title %}Sugerir Atividade - Smart Workflow{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow">
-            <div class="card-header bg-warning text-dark fw-bold">
-                <i class="bi bi-lightbulb-fill"></i> Colabore com a Escola
+<div class="row justify-content-center pb-5">
+    <div class="col-md-8 col-lg-7">
+        
+        <div class="mb-3">
+            <a href="{% url 'avaliar_materia' relatorio.id competencia.componente %}" class="text-decoration-none text-muted small">
+                <i class="bi bi-chevron-left"></i> Voltar para a grade de avaliação
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0 overflow-hidden">
+            <div class="card-header bg-warning text-dark py-3 border-0">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-lightbulb-fill fs-4 me-2"></i>
+                    <div>
+                        <h5 class="mb-0 fw-bold">Colaboração Pedagógica</h5>
+                        <small class="opacity-75">Sua prática pode ajudar outros docentes.</small>
+                    </div>
+                </div>
             </div>
-            <div class="card-body p-4">
-                <h5 class="card-title text-primary mb-3">
-                    Você está sugerindo para: <br>
-                    <strong>{{ competencia.habilidade }}</strong>
-                </h5>
-                <p class="text-muted small">Sua sugestão será analisada pela coordenação e, se aprovada, aparecerá para outros professores quando um aluno tiver o nível indicado.</p>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="bg-primary bg-opacity-10 p-4 rounded-3 mb-4 border-start border-4 border-primary">
+                    <span class="badge bg-primary mb-2 px-3">{{ competencia.codigo }}</span>
+                    <h5 class="text-dark fw-bold mb-2">Habilidade BNCC:</h5>
+                    <p class="text-secondary mb-0 fst-italic">"{{ competencia.habilidade }}"</p>
+                </div>
+
+                <div class="alert alert-info border-0 small mb-4 shadow-sm">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>Como funciona:</strong> Após o envio, a coordenação analisará sua proposta. Uma vez aprovada, ela será sugerida automaticamente para alunos que atingirem o nível indicado por você.
+                </div>
                 
-                <hr>
+                <hr class="my-4 opacity-25">
 
                 <form method="post">
                     {% csrf_token %}
                     
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Título da Atividade</label>
-                        <input type="text" name="titulo" class="form-control" required placeholder="Ex: Jogo da Memória das Sílabas">
+                    <div class="mb-4">
+                        <label for="id_titulo" class="form-label fw-bold text-primary small">TÍTULO DA ATIVIDADE</label>
+                        <input type="text" id="id_titulo" name="titulo" class="form-control form-control-lg border-2" 
+                               required placeholder="Ex: Oficina de Programação com Blocos">
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Descrição da Prática (Como fazer?)</label>
-                        <textarea name="descricao" class="form-control" rows="5" required placeholder="Descreva o passo a passo, materiais necessários, etc..."></textarea>
+                    <div class="mb-4">
+                        <label for="id_descricao" class="form-label fw-bold text-primary small">METODOLOGIA (PASSO A PASSO)</label>
+                        <textarea id="id_descricao" name="descricao" class="form-control border-2" rows="6" 
+                                  required placeholder="Descreva os materiais, a dinâmica e como avaliar o progresso..."></textarea>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Recomendada para alunos com Nível:</label>
-                        <select name="nivel_sugerido" class="form-select" required>
-                            <option value="">Selecione...</option>
-                            <option value="1">1 - Não desenvolvido (Para quem tem muita dificuldade)</option>
-                            <option value="2">2 - Em desenvolvimento inicial</option>
-                            <option value="3">3 - Em desenvolvimento parcial</option>
-                            <option value="4">4 - Desenvolvido</option>
-                            <option value="5">5 - Plenamente desenvolvido (Para desafiar)</option>
+                    <div class="mb-4">
+                        <label for="id_nivel" class="form-label fw-bold text-primary small">RECOMENDADA PARA O NÍVEL:</label>
+                        <select id="id_nivel" name="nivel_alvo" class="form-select form-select-lg border-2" required>
+                            <option value="">Selecione o estágio ideal...</option>
+                            <option value="1">Nível 1 - Não desenvolvido (Intervenção inicial)</option>
+                            <option value="2">Nível 2 - Em desenvolvimento (Início)</option>
+                            <option value="3">Nível 3 - Em desenvolvimento (Intermediário)</option>
+                            <option value="4">Nível 4 - Desenvolvido (Consolidação)</option>
+                            <option value="5">Nível 5 - Plenamente desenvolvido (Desafio/Aprofundamento)</option>
                         </select>
-                        <div class="form-text">O sistema irá recomendar essa atividade automaticamente quando um aluno tirar essa nota.</div>
+                        <div class="form-text mt-2 text-muted">
+                            <i class="bi bi-magic me-1"></i> O sistema cruzará este dado com a nota do aluno para gerar a recomendação.
+                        </div>
                     </div>
 
-                    <div class="d-flex justify-content-between mt-4">
-                        <a href="{% url 'avaliar_materia' relatorio.id competencia.componente %}" class="btn btn-outline-secondary">
-                            Cancelar
+                    <div class="d-flex justify-content-between align-items-center mt-5">
+                        <a href="{% url 'avaliar_materia' relatorio.id competencia.componente %}" class="text-decoration-none text-danger fw-bold small text-uppercase">
+                            <i class="bi bi-x-circle me-1"></i> Descartar
                         </a>
-                        <button type="submit" class="btn btn-warning fw-bold px-4">
-                            <i class="bi bi-send"></i> Enviar Sugestão
+                        <button type="submit" class="btn btn-warning btn-lg fw-bold px-5 shadow border-0">
+                            <i class="bi bi-send-check-fill me-2"></i> ENVIAR PARA ANÁLISE
                         </button>
                     </div>
                 </form>
