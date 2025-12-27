@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.db.models import Q
 from datetime import date
 import random
+from django.http import HttpResponse
 
 # Importações dos modelos e utilitários
 from .models import (
@@ -47,10 +48,10 @@ def dashboard(request):
             ano=ano_ativo
         )
 
-        alunos_ids = Aluno.objects.filter(turma__in=minhas_turmas).values_list('id', flat=True)
+        alunos_ids = Aluno.objects.filter(turma__in=minhas_turmas).values_list('pk', flat=True)
         total_alunos = len(alunos_ids)
         
-        alunos_com_relatorio = relatorios_atuais.values_list('aluno_id', flat=True)
+        alunos_com_relatorio = relatorios_atuais.values_list('aluno', flat=True)
         pendentes = total_alunos - len(alunos_com_relatorio)
 
         iniciados = relatorios_atuais.filter(status__in=['RASCUNHO', 'CORRECAO']).count()
@@ -118,7 +119,7 @@ def dashboard(request):
         historico = Relatorio.objects.filter(ano=ano_ativo).select_related('aluno', 'professor', 'aluno__turma').order_by('-id')[:50]
         
         # Aba: Banco de Ideias (Todas as aprovadas)
-        banco_ideias = SugestaoAtividade.objects.all().select_related('competencia').order_by('-id')
+        banco_ideias = SugestaoAtividade.objects.all().select_related('competencia').order_by('-pk')
 
         from .forms import TurmaForm, AlunoForm, ProfessorForm, CompetenciaForm # Certifique-se de que os nomes batem com seu forms.py
 
@@ -241,8 +242,8 @@ def turma_detail(request, turma_id):
 # 3. TELA DE SELEÇÃO DE MATÉRIAS (Menu Principal do Professor)
 # ==============================================================================
 @login_required
-def avaliar_aluno(request, aluno_id):
-    aluno = get_object_or_404(Aluno, id=aluno_id)
+def avaliar_aluno(request, aluno_pk):
+    aluno = get_object_or_404(Aluno, pk=aluno_pk)
     config = ConfiguracaoSistema.objects.first()
     ano_atual = config.ano_letivo if config else 2025
     trimestre_atual = config.trimestre_ativo if config else '1'
@@ -340,7 +341,7 @@ def avaliar_materia(request, relatorio_id, materia_codigo):
     if request.method == 'POST':
         if not pode_editar:
             messages.error(request, "Este relatório está bloqueado para edições.")
-            return redirect('avaliar_aluno', aluno_id=relatorio.aluno.id)
+            return redirect('avaliar_aluno', aluno_pk=relatorio.aluno.pk)
 
         # AÇÃO 1: ADICIONAR COMPETÊNCIA
         if 'btn_adicionar' in request.POST:
@@ -388,7 +389,7 @@ def avaliar_materia(request, relatorio_id, materia_codigo):
                 av.save()
 
             messages.success(request, "Alterações salvas com sucesso!")
-            return redirect('avaliar_aluno', aluno_id=relatorio.aluno.id)
+            return redirect('avaliar_aluno', aluno_pk=relatorio.aluno.pk)
 
     # --- EXIBIÇÃO (GET) ---
     avaliacoes = Avaliacao.objects.filter(
@@ -466,7 +467,7 @@ def aprovar_sugestao(request, sugestao_id, decisao):
         
     elif decisao == 'rejeitada':
         # Alinhado com o status do Models.py
-        sugestao.status = 'REJEITADA'
+        sugestao.status = 'REJEITADO'
         sugestao.save()
         messages.warning(request, f"Sugestão rejeitada e movida para o histórico.")
     
@@ -521,7 +522,7 @@ def enviar_relatorio_final(request, relatorio_id):
         # 2. Trava de Status: Só envia se estiver em edição
         if relatorio.status not in ['RASCUNHO', 'CORRECAO']:
              messages.error(request, "Este relatório já foi enviado ou está finalizado.")
-             return redirect('avaliar_aluno', aluno_id=relatorio.aluno.id)
+             return redirect('avaliar_aluno', aluno_pk=relatorio.aluno.pk)
 
         # 3. Validação de Preenchimento (Não permite enviar se houver competência sem nota)
         pendencias = []
@@ -546,7 +547,7 @@ def enviar_relatorio_final(request, relatorio_id):
             lista_nomes = [nomes_materias.get(code, code) for code in pendencias]
             
             messages.error(request, f"Ação bloqueada! As seguintes matérias possuem competências sem nota: {', '.join(lista_nomes)}")
-            return redirect('avaliar_aluno', aluno_id=relatorio.aluno.id)
+            return redirect('avaliar_aluno', aluno_pk=relatorio.aluno.pk)
         
         # --- FLUXO DE SUCESSO ---
         # Alterado para 'ANALISE' para manter consistência com o Dashboard e Models
@@ -556,7 +557,7 @@ def enviar_relatorio_final(request, relatorio_id):
         messages.success(request, f"Sucesso! O relatório de {relatorio.aluno.nome_completo} foi enviado para análise.")
         return redirect('turma_detail', turma_id=relatorio.aluno.turma.id)
 
-    return redirect('avaliar_aluno', aluno_id=relatorio.aluno.id)
+    return redirect('avaliar_aluno', aluno_id=relatorio.aluno.pk)
 
 # ==============================================================================
 # 10. LIMPAR AVALIAÇÃO DE UMA MATÉRIA (RESETAR)
@@ -573,7 +574,7 @@ def limpar_materia(request, relatorio_id, materia_codigo):
     # Trava de Segurança: Bloqueia limpeza se o relatório já foi enviado para análise ou aprovado
     if relatorio.status not in ['RASCUNHO', 'CORRECAO']:
         messages.error(request, "Não é possível limpar notas de um relatório que já está em análise ou finalizado.")
-        return redirect('avaliar_aluno', aluno_id=relatorio.aluno.id)
+        return redirect('avaliar_aluno', aluno_pk=relatorio.aluno.pk)
         
     if request.method == 'POST':
         # Remove fisicamente todas as avaliações dessa matéria específica
@@ -583,7 +584,7 @@ def limpar_materia(request, relatorio_id, materia_codigo):
         ).delete()
         messages.success(request, f"As avaliações de {materia_codigo} foram removidas com sucesso.")
         
-    return redirect('avaliar_aluno', aluno_id=relatorio.aluno.id)
+    return redirect('avaliar_aluno', aluno_pk=relatorio.aluno.pk)
 
 # ==============================================================================
 # 11. VER DETALHES DA SUGESTÃO (Moderação)
@@ -704,10 +705,9 @@ def salvar_turma(request, turma_id=None):
         form = TurmaForm(request.POST, instance=turma)
         if form.is_valid():
             form.save()
-            msg = "Turma atualizada com sucesso!" if turma_id else "Nova turma cadastrada!"
-            messages.success(request, msg)
+            messages.success(request, "Informações da turma gravadas com sucesso!")
         else:
-            messages.error(request, "Erro ao salvar turma. Verifique se os dados estão corretos.")
+            messages.error(request, "Falha ao salvar turma. Verifique os dados.")
             
     return redirect('gestao_escolar')
 
@@ -730,23 +730,28 @@ def excluir_turma(request, turma_id):
 # 12. CRUD DE ALUNOS
 # ==============================================================================
 @login_required
-def salvar_aluno(request, aluno_id=None):
-    aluno = get_object_or_404(Aluno, id=aluno_id) if aluno_id else None
+def salvar_aluno(request, aluno_pk=None):
+    # aluno_pk agora recebe o número da matrícula
+    aluno = get_object_or_404(Aluno, pk=aluno_pk) if aluno_pk else None
     
     if request.method == 'POST':
         form = AlunoForm(request.POST, instance=aluno)
         if form.is_valid():
             form.save()
-            msg = "Dados do aluno atualizados!" if aluno_id else "Aluno matriculado com sucesso!"
+            msg = "Dados do aluno atualizados!" if aluno_pk else "Aluno matriculado com sucesso!"
             messages.success(request, msg)
+            return redirect('gestao_escolar')
         else:
-            messages.error(request, "Erro ao processar matrícula. Verifique os campos.")
+            # Exibe erros específicos, como matrícula duplicada
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Erro no campo {field}: {error}")
             
     return redirect('gestao_escolar')
 
 @login_required
-def excluir_aluno(request, aluno_id):
-    aluno = get_object_or_404(Aluno, id=aluno_id)
+def excluir_aluno(request, aluno_pk):
+    aluno = get_object_or_404(Aluno, id=aluno_pk)
     # Verifica se existem relatórios antes de apagar (Integridade Pedagógica)
     if aluno.relatorio_set.exists():
         messages.warning(request, "Este aluno possui relatórios no sistema e não pode ser excluído para preservar o histórico.")
@@ -761,31 +766,23 @@ def excluir_aluno(request, aluno_id):
 # ==============================================================================
 @login_required
 def salvar_professor(request, professor_id=None):
-    User = get_user_model()
+    if request.user.role not in ['ADMINISTRADOR', 'COORDENADOR']:
+        return redirect('dashboard')
+
     professor = get_object_or_404(User, id=professor_id) if professor_id else None
     
     if request.method == 'POST':
         form = ProfessorForm(request.POST, instance=professor)
         if form.is_valid():
-            # Salva o usuário sem persistir no banco ainda (commit=False)
-            user = form.save(commit=False)
+            # 1. Salva os dados básicos (User)
+            novo_professor = form.save()
             
-            if not professor_id:
-                user.set_password('123456') # Senha padrão para novos cadastros
-                user.role = 'PROFESSOR'
+            # 2. Atualiza as turmas vinculadas (ManyToMany)
+            turmas_selecionadas = form.cleaned_data.get('turmas')
+            novo_professor.turmas.set(turmas_selecionadas)
             
-            user.save() # Salva o usuário
-            
-            # Atualiza a relação Many-to-Many de Turmas de forma limpa
-            # O Django gerencia a tabela intermediária automaticamente com .set()
-            turmas = form.cleaned_data.get('turmas')
-            user.turmas.set(turmas)
-
-            msg = "Vínculos do professor atualizados!" if professor_id else "Professor cadastrado com acesso ao sistema!"
-            messages.success(request, msg)
-        else:
-            # Erro comum: username (login) já existente
-            messages.error(request, "Erro ao salvar. Certifique-se que o login é único e os campos estão preenchidos.")
+            messages.success(request, "Cadastro de professor atualizado!")
+            return redirect('gestao_escolar')
             
     return redirect('gestao_escolar')
 
@@ -858,17 +855,23 @@ def criar_sugestao_coordenador(request):
 # ==============================================================================
 @login_required
 def gestao_competencias(request):
-    # Apenas coordenadores podem gerenciar o banco de dados BNCC
-    if request.user.role not in ['ADMINISTRADOR', 'COORDENADOR']:
-        messages.error(request, "Acesso restrito à gestão.")
-        return redirect('dashboard')
-    
-    # Captura filtros da URL
+    """
+    Interface de consulta e gestão da BNCC.
+    Permite busca textual, por componente e por série (1º ao 5º ano).
+    """
+    # 1. Identificação de Papéis e Contexto de Navegação
+    is_professor = request.user.role == 'PROFESSOR'
+    somente_leitura = is_professor
+    aluno_pk = request.GET.get('aluno_pk') # Captura ID para retorno à avaliação
+
+    # 2. Captura de Filtros da URL
     busca = request.GET.get('busca')
     filtro_materia = request.GET.get('filtro_materia')
+    serie = request.GET.get('serie') # Novo filtro de Série/Ano
     
     competencias = Competencia.objects.all().order_by('codigo')
     
+    # 3. Aplicação de Filtros Dinâmicos
     # Filtro de busca textual (Código ou Descrição)
     if busca:
         competencias = competencias.filter(
@@ -879,18 +882,30 @@ def gestao_competencias(request):
     if filtro_materia:
         competencias = competencias.filter(componente=filtro_materia)
 
-    # Limite de 50 resultados iniciais para performance de carregamento
+    # Filtro por Série (Baseado no padrão "1º...", "2º...")
+    if serie:
+    # Supondo que o nome do campo no model seja 'anos_aplicacao'
+        competencias = competencias.filter(anos_aplicacao=serie)
+
+    # 4. Controle de Performance
     aviso_limite = False
-    if not busca and not filtro_materia:
+    if not busca and not filtro_materia and not serie:
         competencias = competencias[:50]
         aviso_limite = True
 
+    # 5. Renderização com Contexto Atualizado
     return render(request, 'gestao_competencias.html', {
         'competencias': competencias,
-        'form_competencia': CompetenciaForm(),
+        'form_competencia': CompetenciaForm() if not somente_leitura else None,
         'busca_ativa': busca,
+        'filtro_materia_ativo': filtro_materia,
+        'serie_ativa': serie,
         'aviso_limite': aviso_limite,
-        'materias': ['PORT', 'MAT', 'CIEN', 'HIST', 'GEO', 'ARTE', 'EDFIS', 'REL']
+        'somente_leitura': somente_leitura,
+        'is_professor': is_professor,
+        'aluno_pk': aluno_pk,
+        'materias': ['PORT', 'MAT', 'CIEN', 'HIST', 'GEO', 'ARTE', 'EDFIS', 'REL'],
+        'series_fundamental': ['1', '2', '3', '4', '5'] # Opções para o seletor
     })
 
 # ==============================================================================
@@ -940,7 +955,11 @@ def visualizar_competencias(request):
     """
     busca = request.GET.get('busca')
     filtro_materia = request.GET.get('filtro_materia')
+    aluno_pk = request.GET.get('aluno_pk')
     
+    if aluno_pk and not aluno_pk.isdigit():
+        aluno_pk = None
+
     # Busca baseada no código
     competencias = Competencia.objects.all().order_by('codigo')
     
@@ -962,6 +981,7 @@ def visualizar_competencias(request):
         'competencias': competencias,
         'busca_ativa': busca,
         'aviso_limite': aviso_limite,
+        'aluno_pk': aluno_pk,
         'materias': ['PORT', 'MAT', 'CIEN', 'HIST', 'GEO', 'ARTE', 'EDFIS', 'REL'],
         
         # VARIÁVEIS DE CONTROLE PARA O TEMPLATE:
@@ -1002,3 +1022,43 @@ def baixar_relatorio_pdf(request, relatorio_id):
         # return response
 
     return HttpResponse("Erro ao gerar PDF", status=400)
+
+@login_required
+def historico_coordenacao(request):
+    # 1. Trava de Segurança: Apenas gestão acessa o histórico global
+    if request.user.role not in ['ADMINISTRADOR', 'COORDENADOR']:
+        messages.error(request, "Acesso restrito à coordenação.")
+        return redirect('dashboard')
+
+    # 2. Captura os filtros da URL (Ano e Trimestre)
+    # Se não houver filtro, não mostramos nada inicialmente para poupar o banco
+    ano_filtro = request.GET.get('ano')
+    tri_filtro = request.GET.get('tri')
+    busca = request.GET.get('q')
+
+    # 3. Busca os anos e trimestres que possuem relatórios no banco para o filtro
+    anos_disponiveis = Relatorio.objects.values_list('ano', flat=True).distinct().order_by('-ano')
+    
+    relatorios = Relatorio.objects.all().select_related('aluno', 'professor', 'aluno__turma')
+
+    if ano_filtro:
+        relatorios = relatorios.filter(ano=ano_filtro)
+    if tri_filtro:
+        relatorios = relatorios.filter(trimestre=tri_filtro)
+    if busca:
+        relatorios = relatorios.filter(
+            Q(aluno__nome_completo__icontains=busca) | 
+            Q(professor__first_name__icontains=busca)
+        )
+
+    # 4. Paginação ou Limite (Opcional, mas recomendado para histórico)
+    if not ano_filtro and not tri_filtro and not busca:
+        relatorios = relatorios.none() # Não carrega nada sem filtro ativo
+
+    return render(request, 'historico_geral.html', {
+        'relatorios': relatorios,
+        'anos_disponiveis': anos_disponiveis,
+        'ano_selecionado': ano_filtro,
+        'tri_selecionado': tri_filtro,
+        'busca_ativa': busca
+    })

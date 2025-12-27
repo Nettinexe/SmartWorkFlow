@@ -97,7 +97,7 @@
 
                             <td class="text-end pe-4">
                                 {% if item.relatorio_id or trimestre_atual == trimestre_sistema %}
-                                    <a href="{% url 'avaliar_aluno' item.aluno.id %}?tri={{ trimestre_atual }}" 
+                                    <a href="{% url 'avaliar_aluno' item.aluno.pk %}?tri={{ trimestre_atual }}" 
                                        class="btn btn-sm fw-bold px-3 shadow-sm 
                                        {% if item.progresso == 100 %}btn-outline-dark{% else %}btn-primary{% endif %}">
                                         

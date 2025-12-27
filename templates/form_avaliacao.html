@@ -7,7 +7,7 @@
 <div class="container pb-5">
     
     <div class="mb-4">
-        <a href="{% url 'avaliar_aluno' relatorio.aluno.id %}?tri={{ relatorio.trimestre }}" class="text-decoration-none text-muted small">
+        <a href="{% url 'avaliar_aluno' relatorio.aluno.pk %}?tri={{ relatorio.trimestre }}" class="text-decoration-none text-muted small">
             <i class="bi bi-arrow-left"></i> Voltar para seleção de matérias
         </a>
         <div class="d-flex align-items-center mt-2">

@@ -1,56 +1,75 @@
 {% extends 'base.html' %}
-
-{% block title %}Banco de Competências BNCC - Smart Workflow{% endblock %}
+{% block title %}Banco de Competências - Smart Workflow{% endblock %}
 
 {% block content %}
 <div class="container pb-5">
     
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <a href="{% url 'dashboard' %}" class="text-decoration-none text-muted small mb-1 d-block">
-                <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
-            </a>
+            {% if somente_leitura and aluno_pk %}
+                <a href="{% url 'avaliar_aluno' aluno_pk %}" class="text-decoration-none text-muted small mb-1 d-block">
+                    <i class="bi bi-arrow-left"></i> Voltar para a Avaliação
+                </a>
+            {% else %}
+                <a href="{% url 'dashboard' %}" class="text-decoration-none text-muted small mb-1 d-block">
+                    <i class="bi bi-arrow-left"></i> Voltar ao Painel Principal
+                </a>
+            {% endif %}
             <h2 class="text-primary fw-bold mb-0">
-                <i class="bi bi-journal-bookmark-fill me-2"></i>Banco de Competências (BNCC)
+                <i class="bi bi-journal-bookmark-fill me-2"></i>Banco de Competências
             </h2>
         </div>
         
         {% if not somente_leitura %}
-        <button class="btn btn-success shadow-sm fw-bold px-4" data-bs-toggle="modal" data-bs-target="#modalCompetencia">
-            <i class="bi bi-plus-lg me-1"></i> Nova Competência
-        </button>
+            <button class="btn btn-success shadow-sm fw-bold px-4" data-bs-toggle="modal" data-bs-target="#modalCompetencia">
+                <i class="bi bi-plus-lg me-1"></i> Nova Competência
+            </button>
         {% endif %}
     </div>
 
-    <div class="card border-0 shadow-sm mb-4 bg-white">
+    <div class="card shadow-sm border-0 mb-4">
         <div class="card-body p-4">
-            <form method="GET" class="row g-3 align-items-end">
+            <form method="get" class="row g-3">
+                {% if aluno_pk %}
+                    <input type="hidden" name="aluno_pk" value="{{ aluno_pk }}">
+                {% endif %}
+
                 <div class="col-md-3">
-                    <label class="form-label fw-bold small text-muted text-uppercase">Componente Curricular</label>
-                    <select name="filtro_materia" class="form-select border-2">
-                        <option value="">Todos os Componentes</option>
-                        {% for mat in materias %}
-                            <option value="{{ mat }}" {% if request.GET.filtro_materia == mat %}selected{% endif %}>{{ mat }}</option>
+                    <label class="form-label small fw-bold text-muted text-uppercase">Série/Ano</label>
+                    <select name="serie" class="form-select" onchange="this.form.submit()">
+                        <option value="">Todas as séries</option>
+                        {% for s in series_fundamental %}
+                            <option value="{{ s }}" {% if serie_ativa == s %}selected{% endif %}>
+                                {{ s }}º Ano
+                            </option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-7">
-                    <label class="form-label fw-bold small text-muted text-uppercase">Pesquisar Habilidade</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-2 border-end-0"><i class="bi bi-search"></i></span>
-                        <input type="text" name="busca" class="form-control border-2 border-start-0" 
-                               placeholder="Ex: EF06LP01 ou 'frações'..." value="{{ busca_ativa|default:'' }}">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary fw-bold w-100 py-2">
-                        FILTRAR
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted text-uppercase">Componente</label>
+                <select name="filtro_materia" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todos</option>
+                    {% for m in materias %}
+                        <option value="{{ m }}" {% if filtro_materia_ativo == m %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted text-uppercase">Buscar por texto ou código</label>
+                <div class="input-group">
+                    <input type="text" name="busca" class="form-control" placeholder="Ex: 1º..." value="{{ busca_ativa|default:'' }}">
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+                </div>
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
+                <a href="?{% if aluno_pk %}aluno_pk={{ aluno_pk }}{% endif %}" class="btn btn-outline-secondary w-100">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
     <div class="card border-0 shadow-sm overflow-hidden">
         <div class="card-body p-0">
             {% if aviso_limite %}
@@ -80,7 +99,7 @@
                         {% for comp in competencias %}
                         <tr>
                             <td class="ps-4">
-                                <span class="badge bg-dark fw-bold px-3 py-2">{{ comp.codigo }}</span>
+                                <span class="badge bg-dark fw-bold px-3 py-2">{{ comp.codigo|upper }}</span>
                             </td>
                             <td><span class="fw-bold text-primary">{{ comp.componente }}</span></td>
                             <td>

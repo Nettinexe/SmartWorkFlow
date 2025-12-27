@@ -17,9 +17,21 @@
             <div class="card shadow-sm border-0 mb-4 overflow-hidden">
                 <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                     <div>
-                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-3 py-2">
-                            <i class="bi bi-hourglass-split me-1"></i> AGUARDANDO MODERAÇÃO
+                        {% if sugestao.status == 'APROVADO'%}
+                        <span class="badge bg-success shadow-sm fw-bold px-3 py-2 text-uppercase">
+                            <i class="bi bi-check-circle-fill me-1"></i> {{sugestao.status}}
                         </span>
+                        {% endif %}
+                        {% if sugestao.status == 'REJEITADA' or sugestao.status == 'REJEITADO' %}
+                        <span class="badge bg-danger shadow-sm fw-bold px-3 py-2 text-uppercase">
+                            <i class="bi bi-x-circle-fill me-1"></i> {{sugestao.status}}
+                        </span>
+                        {% endif %}
+                        {% if sugestao.status == 'PENDENTE' or sugestao.status == 'AGUARDANDO' %}
+                        <span class="badge bg-warning text-dark shadow-sm fw-bold px-3 py-2 text-uppercase">
+                            <i class="bi bi-hourglass-split me-1"></i> {{sugestao.status}}
+                        </span>
+                        {% endif %}
                     </div>
                     <div class="text-end text-muted small">
                         <i class="bi bi-calendar3 me-1"></i> Recebido em: <strong>{{ sugestao.data_envio|date:"d/m/Y" }}</strong>
@@ -38,7 +50,7 @@
                         </div>
                         <div>
                             <p class="mb-0 fw-bold text-dark" style="font-size: 1.1rem;">
-                                Prof. {{ sugestao.professor_autor.get_full_name|default:sugestao.professor_autor.username }}
+                                {{ sugestao.professor_autor.get_full_name|default:sugestao.professor_autor.username }}
                             </p>
                             <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Autor da Proposta Pedagógica</small>
                         </div>
@@ -46,7 +58,7 @@
 
                     <div class="row g-4 mb-5">
                         <div class="col-md-6">
-                            <label class="text-muted small text-uppercase fw-bold mb-2 d-block">Vínculo Curricular (BNCC)</label>
+                            <label class="text-muted small text-uppercase fw-bold mb-2 d-block">Vínculo Curricular</label>
                             <div class="p-3 border rounded-3 bg-white shadow-sm h-100">
                                 <span class="badge bg-dark mb-2">{{ sugestao.competencia.codigo }}</span>
                                 <p class="mb-0 small fw-medium text-dark">{{ sugestao.competencia.habilidade }}</p>
@@ -96,7 +108,7 @@
                             <a href="{% url 'aprovar_sugestao' sugestao.id 'aprovada' %}" 
                                class="btn btn-success w-100 py-3 fw-bold shadow border-0"
                                onclick="return confirm('Deseja publicar esta atividade? Ela ficará disponível para todos os professores.');">
-                                <i class="bi bi-check-circle-fill me-2"></i> APROVAR E PUBLICAR
+                                <i class="bi bi-check-circle-fill me-2"></i> APROVAR 
                             </a>
                         </div>
                     </div>

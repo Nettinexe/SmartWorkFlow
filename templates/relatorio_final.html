@@ -40,7 +40,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4 no-print">
         <div>
-            {% if not is_professor %}
+            {% if user.role == 'ADMINISTRADOR' %}
                 <a href="{% url 'dashboard' %}" class="btn btn-light border text-muted fw-bold small">
                     <i class="bi bi-arrow-left"></i> VOLTAR AO PAINEL
                 </a>
@@ -82,7 +82,7 @@
 
         <div class="text-center border-bottom border-2 border-dark pb-4 mb-4">
             <h1 class="h3 fw-bold text-uppercase mb-1">Escola Municipal Ataualpa Duque</h1>
-            <p class="mb-0 fw-bold">Secretaria Municipal de Educação de Leopoldina</p>
+            <p class="mb-0 fw-bold">Secretaria Municipal de Educação de Olaria</p>
             <p class="text-muted small">Relatório de Desenvolvimento Individual do Aluno</p>
         </div>
 
@@ -98,6 +98,8 @@
                 <span class="fw-bold text-primary">{{ relatorio.trimestre }}º Trimestre / {{ relatorio.ano }}</span><br>
                 <small class="text-uppercase text-muted d-block mt-3 fw-bold" style="font-size: 0.65rem;">Emissão do Documento</small>
                 <span class="text-dark">{% now "d/m/Y - H:i" %}</span>
+                <small class="text-uppercase text-muted d-block mt-3 fw-bold" style="font-size: 0.65rem;">Emitido por</small>
+                <span class="text-dark"> Prof. {{ relatorio.professor.first_name }}</span>
             </div>
         </div>
 

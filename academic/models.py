@@ -29,21 +29,24 @@ class CustomUser(AbstractUser):
 # ==============================================================================
 class Turma(models.Model):
     # Padronização das séries conforme usamos no formulário de competências
-    SERIES_BNCC = [
+    SERIES = [
         ('1', '1º Ano Fundamental'),
         ('2', '2º Ano Fundamental'),
         ('3', '3º Ano Fundamental'),
         ('4', '4º Ano Fundamental'),
         ('5', '5º Ano Fundamental'),
-        ('6', '6º Ano Fundamental'),
-        ('7', '7º Ano Fundamental'),
-        ('8', '8º Ano Fundamental'),
-        ('9', '9º Ano Fundamental'),
+    ]
+    TURNOS_CHOICES = [
+        ('MATUTINO', 'Matutino'),
+        ('VESPERTINO', 'Vespertino'),
+        ('NOTURNO', 'Noturno'),
+        ('INTEGRAL', 'Integral'),
     ]
 
     nome = models.CharField(max_length=50, verbose_name="Nome da Turma")
-    serie_curricular = models.CharField(max_length=2, choices=SERIES_BNCC, verbose_name="Série (Currículo)")
+    serie_curricular = models.CharField(max_length=2, choices=SERIES, verbose_name="Série (Currículo)")
     ano_letivo = models.IntegerField(default=2026)
+    turno = models.CharField(default="MATUTINO", max_length=15, choices=TURNOS_CHOICES, verbose_name="Turno")
     
     # Campo ManyToMany centralizado (removida a duplicata que existia no arquivo anterior)
     professores = models.ManyToManyField(
@@ -60,6 +63,7 @@ class Aluno(models.Model):
     nome_completo = models.CharField(max_length=200)
     data_nascimento = models.DateField(null=True, blank=True)
     turma = models.ForeignKey(Turma, on_delete=models.CASCADE, related_name='alunos')
+    matricula = models.IntegerField(primary_key=True, default=0000000, verbose_name="Número de matrícula(Aluno)")
 
     def __str__(self):
         return self.nome_completo

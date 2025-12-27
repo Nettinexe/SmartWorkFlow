@@ -97,10 +97,10 @@
                                 <td class="ps-4 fw-bold text-dark">{{ aluno.nome_completo }}</td>
                                 <td><span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ aluno.turma.nome }}</span></td>
                                 <td class="text-end pe-4">
-                                    <button class="btn btn-outline-primary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#modalAluno{{ aluno.id }}">
+                                    <button class="btn btn-outline-primary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#modalAluno{{ aluno.pk }}">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
-                                    <a href="{% url 'excluir_aluno' aluno.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('ATENÇÃO: Isso apagará o histórico deste aluno. Continuar?');">
+                                    <a href="{% url 'excluir_aluno' aluno.pk %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('ATENÇÃO: Isso apagará o histórico deste aluno. Continuar?');">
                                         <i class="bi bi-trash3"></i>
                                     </a>
                                 </td>
@@ -236,11 +236,19 @@
                     <div class="mb-0">
                         <label class="form-label fw-bold">Série Curricular</label>
                         <select name="serie_curricular" class="form-select">
-                            {% for i in "123456789" %}
+                            {% for i in "12345" %}
                                 <option value="{{ i }}" {% if turma.serie_curricular == i %}selected{% endif %}>{{ i }}º Ano</option>
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="fw-bold small">Ano Letivo</label>
+                            {{ form_turma.ano_letivo }} </div>
+                    <div class="col-md-6">
+                        <label class="fw-bold small">Turno</label>
+                            {{ form_turma.turno }} </div>
+                    </div>  
                 </div>
                 <div class="modal-footer bg-light border-0">
                     <button type="submit" class="btn btn-primary fw-bold px-4">Salvar Alterações</button>
@@ -252,10 +260,10 @@
 {% endfor %}
 
 {% for aluno in alunos %}
-<div class="modal fade" id="modalAluno{{ aluno.id }}" tabindex="-1">
+<div class="modal fade" id="modalAluno{{ aluno.pk }}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content border-0 shadow">
-            <form action="{% url 'editar_aluno' aluno.id %}" method="POST">
+            <form action="{% url 'editar_aluno' aluno.pk %}" method="POST">
                 {% csrf_token %}
                 <div class="modal-header bg-primary text-white border-0">
                     <h5 class="modal-title fw-bold">Atualizar Aluno</h5>
@@ -265,6 +273,14 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Nome Completo</label>
                         <input type="text" name="nome_completo" class="form-control" value="{{ aluno.nome_completo }}" required>
+                    </div>
+                    <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="fw-bold small">Data de Nascimento</label>
+                            {{ form_aluno.data_nascimento }} </div>
+                    <div class="col-md-6">
+                        <label class="fw-bold small">Número de Matrícula</label>
+                            {{ form_aluno.matricula }} </div>
                     </div>
                     <div class="mb-0">
                         <label class="form-label fw-bold">Transferir de Turma</label>
@@ -295,29 +311,37 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Nome</label>
-                            <input type="text" name="first_name" class="form-control" value="{{ prof.first_name }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Login</label>
-                            <input type="text" name="username" class="form-control" value="{{ prof.username }}" required>
-                        </div>
-                    </div>
-                    <div class="mb-0">
-                        <label class="fw-bold d-block mb-3 text-primary small text-uppercase">Turmas Atribuídas</label>
-                        <div class="bg-light p-3 rounded-3 border d-flex flex-wrap gap-3">
-                            {% for turma in turmas %}
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="turmas" value="{{ turma.id }}" 
-                                       id="t{{ prof.id }}_{{ turma.id }}" {% if turma in prof.turmas.all %}checked{% endif %}>
-                                <label class="form-check-label fw-medium" for="t{{ prof.id }}_{{ turma.id }}">{{ turma.nome }}</label>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="fw-bold small">Nome Completo</label>
+            <input type="text" name="first_name" value="{{ prof.first_name }}" class="form-control" placeholder="Digite o nome completo">
+        </div>
+        <div class="col-md-3">
+            <label class="fw-bold small">Login</label>
+            <input type="text" name="username" value="{{ prof.username }}" class="form-control" placeholder="Login de acesso">
+        </div>
+        <div class="col-md-3">
+            <label class="fw-bold small">E-mail</label>
+            <input type="email" name="email" value="{{ prof.email }}" class="form-control" placeholder="E-mail para contato">
+        </div>
+    </div>
+
+    <div class="mb-0">
+        <label class="fw-bold d-block mb-3 text-primary small text-uppercase">Turmas Atribuídas</label>
+        <div class="bg-light p-3 rounded-3 border d-flex flex-wrap gap-3">
+            {% for turma in turmas %}
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="turmas" value="{{ turma.id }}" 
+                       id="t{{ prof.id }}_{{ turma.id }}" 
+                       {% if turma in prof.turmas.all %}checked{% endif %}>
+                <label class="form-check-label fw-medium" for="t{{ prof.id }}_{{ turma.id }}">
+                    {{ turma.nome }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
                 <div class="modal-footer bg-light border-0">
                     <button type="submit" class="btn btn-primary fw-bold px-4">Salvar Vínculos</button>
                 </div>

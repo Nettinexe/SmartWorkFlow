@@ -72,7 +72,7 @@
             <p class="text-muted small mb-0">Gerencie as entregas e o banco de atividades oficiais.</p>
         </div>
         <button class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovaSugestaoCoord">
-            <i class="bi bi-plus-circle me-1"></i> Nova Atividade Oficial
+            <i class="bi bi-plus-circle me-1"></i> Nova sugestão de ação
         </button>
     </div>
 
@@ -240,6 +240,7 @@
         <a href="{% url 'configuracoes_sistema' %}" class="btn btn-primary shadow-sm"><i class="bi bi-sliders me-2"></i> Prazos</a>
         <a href="{% url 'gestao_escolar' %}" class="btn btn-info text-white shadow-sm fw-bold"><i class="bi bi-people-fill me-2"></i> Turmas,Alunos e Professores</a>
         <a href="/admin/" class="btn btn-outline-secondary"><i class="bi bi-gear-fill me-2"></i> Admin</a>
+        <a href="{% url 'historico_coordenacao' %}" class="btn btn-secondary shadow-sm"><i class="bi bi-clock-history me-1"></i> ABRIR HISTÓRICO</a>
     </div>
 
     <div class="modal fade" id="modalNovaSugestaoCoord" tabindex="-1">
@@ -253,7 +254,7 @@
                     </div>
                     <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Código BNCC</label>
+                            <label class="form-label fw-bold">Código</label>
                             <input type="text" name="codigo_bncc" class="form-control text-uppercase fw-bold" placeholder="Ex: EF06LP01" required>
                         </div>
                         <div class="mb-3">

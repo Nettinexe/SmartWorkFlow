@@ -22,7 +22,7 @@
             </div>
             
             <div class="d-flex gap-2">
-                <a href="{% url 'catalogo_bncc_professor' %}" class="btn btn-outline-primary fw-bold shadow-sm" target="_blank">
+                <a href="{% url 'gestao_competencias'%}?aluno_pk={{ aluno.pk }}" class="btn btn-outline-primary fw-bold shadow-sm" target="_blank">
                     <i class="bi bi-journal-text me-1"></i> CONSULTAR COMPETÊNCIAS
                 </a>
                 <a href="{% url 'visualizar_relatorio' relatorio.id %}" class="btn btn-dark shadow-sm fw-bold">
@@ -43,6 +43,13 @@
         </div>
     </div>
     {% endif %}
+    {%if relatorio.status == 'CORRECAO'%}
+    <div class="alert alert-danger mb-4 border-2 shadow-sm">
+            <h6 class="fw-bold"><i class="bi bi-exclamation-octagon-fill me-2"></i>SOLICITAÇÃO DE CORREÇÃO:</h6>
+            <p class="mb-0 small">"{{ relatorio.feedback_coordenacao }}"</p>
+    </div>
+    {% endif %}
+
 
     <div class="row">
         <div class="col-12 mb-4">

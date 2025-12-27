@@ -6,7 +6,7 @@ from academic.views import (
     limpar_materia, detalhe_sugestao, decisao_relatorio, configuracoes_sistema,
     gestao_escolar, salvar_turma, excluir_turma, salvar_aluno, excluir_aluno,
     salvar_professor, excluir_professor, criar_sugestao_coordenador, gestao_competencias,
-    salvar_competencia, excluir_competencia, visualizar_competencias
+    salvar_competencia, excluir_competencia, visualizar_competencias, historico_coordenacao
 )
 
 urlpatterns = [
@@ -25,7 +25,7 @@ urlpatterns = [
     # ==========================================================================
     # 3. AVALIAÇÃO E RELATÓRIOS (Workflow do Professor)
     # ==========================================================================
-    path('avaliar/<int:aluno_id>/', avaliar_aluno, name='avaliar_aluno'), #
+    path('avaliar/<int:aluno_pk>/', avaliar_aluno, name='avaliar_aluno'), #
     path('relatorio/<int:relatorio_id>/disciplina/<str:materia_codigo>/', avaliar_materia, name='avaliar_materia'), #
     path('relatorio/<int:relatorio_id>/limpar/<str:materia_codigo>/', limpar_materia, name='limpar_materia'), #
     path('relatorio/<int:relatorio_id>/enviar/', enviar_relatorio_final, name='enviar_relatorio_final'), #
@@ -45,6 +45,7 @@ urlpatterns = [
     path('coordenacao/', area_coordenacao, name='area_coordenacao'), #
     path('relatorio/<int:relatorio_id>/decisao/', decisao_relatorio, name='decisao_relatorio'), #
     path('sistema/configuracoes/', configuracoes_sistema, name='configuracoes_sistema'), #
+    path('coordenacao/historico/', historico_coordenacao, name='historico_coordenacao'),
     
     # ==========================================================================
     # 6. GESTÃO ESCOLAR (Turmas, Alunos e Professores)
@@ -58,8 +59,8 @@ urlpatterns = [
     
     # Alunos
     path('gestao/aluno/salvar/', salvar_aluno, name='criar_aluno'), #
-    path('gestao/aluno/salvar/<int:aluno_id>/', salvar_aluno, name='editar_aluno'), #
-    path('gestao/aluno/excluir/<int:aluno_id>/', excluir_aluno, name='excluir_aluno'), #
+    path('gestao/aluno/salvar/<int:aluno_pk>/', salvar_aluno, name='editar_aluno'), #
+    path('gestao/aluno/excluir/<int:aluno_pk>/', excluir_aluno, name='excluir_aluno'), #
     
     # Professores
     path('gestao/professor/salvar/', salvar_professor, name='criar_professor'), #
